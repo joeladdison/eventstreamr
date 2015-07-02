@@ -12,6 +12,8 @@ from lib.ui import *
 from lib.duration import *
 from lib.job import *
 
+SCHEDULE_URL = 'http://2014.pycon-au.org/schedule/programme/json'
+
 # Main Constants
 config_file = "config.json"
 
@@ -21,13 +23,17 @@ config_data = open_json(config_file)
 # should be referencing config data directly
 base_dir = os.path.abspath(config_data['base_dir'])
 schedule_file = os.path.join(base_dir, config_data['schedule'])
-recording_dir = os.path.join(base_dir, 'recording')
-queue_todo_dir = os.path.join(base_dir, 'queue', 'todo')
+recording_dir = '/srv/av'
+queue_todo_dir = os.path.join(base_dir, 'queue', 'cut', 'todo')
 completed_dir = os.path.join(base_dir, 'completed')
 
-json_format="%Y-%m-%d %H:%M:%S"
+schedule_file = os.path.join(base_dir, "schedule.json")
+if not os.path.exists(schedule_file):
+    with open(schedule_file, "w") as f:
+        f.write(urllib2.urlopen(SCHEDULE_URL).read())
 
-dv_format="%Y-%m-%d_%H-%M-%S"
+json_format = "%Y-%m-%d %H:%M:%S"
+dv_format = "%Y-%m-%d_%H-%M-%S"
 dv_match_window = datetime.timedelta(minutes=10)
 dv_frame_rate = 25
 
@@ -38,22 +44,28 @@ for talk in talks:
     link_dv_files(talk, recording_dir, dv_match_window, dv_format)
 
 # Create a dictionary of jobs and begin the main loop
-jobs = { t['schedule_id']: t for t in talks if t['playlist'] }
+jobs = {t['schedule_id']: t for t in talks if t['playlist']}
 
-print "Available jobs:", [t for t,v in jobs.items() if v['playlist']]
+print "Available jobs:", [t for t, v in jobs.items() if v['playlist']]
 n = prompt_for_number("Select a job")
 
-while n: 
+while n:
     talk = jobs[n]
 
-    dv_files = [os.path.join(dv_file['filepath'], dv_file['filename']) for dv_file in talk['playlist']]
+    dv_files = [os.path.join(dv_file['filepath'], dv_file['filename'])
+                for dv_file in talk['playlist']]
 
     with open(os.devnull, 'wb') as DEVNULL:
         subprocess.Popen(['vlc'] + dv_files, stderr=DEVNULL)
+        pass
 
     print
     print "Title:", talk['title']
-    print "Presenter:", talk['presenters']
+    if 'presenters' in talk:
+        print "Presenter:", talk['presenters']
+    else:
+        print "NO PRESENTER FOUND"
+
     print "Files:"
     for i, dv_file in enumerate(dv_files):
         print i, dv_file
@@ -69,6 +81,12 @@ while n:
     while end_offset is None:
         end_offset = prompt_for_time("End time offset")
 
+    credits = None
+    while credits is None:
+        credits = prompt("Credits")
+
+    intro_file = prompt("Intro File", "intro.dv")
+
     # this sets up the cut_list which will be used later
     talk['cut_list'] = talk['playlist'][start_file:end_file+1]
     talk['cut_list'][0]['in'] = start_offset
@@ -76,10 +94,24 @@ while n:
 
     print "Creating and queuing job " + str(talk['schedule_id'])
     job_file = os.path.join(queue_todo_dir, str(talk['schedule_id']))
-    create_mlt(talk, job_file + '.mlt', dv_frame_rate)
-    create_title(talk, job_file + '.title.png')
+
+    talk["main"] = {"filename": str(talk['schedule_id']) + "-main.dv"}
+    talk["intro"] = {"title": talk['title'],
+                     "filename": intro_file}
+    if "presenters" in talk:
+        talk['intro']['presenters'] = talk['presenters']
+    else:
+        if " by " in talk['title']:
+            (talk['intro']['title'], talk['intro']['presenters']) = talk['title'].split(" by ")
+        else:
+            talk['intro']['presenters'] = ""
+    talk["credits"] = {"text": credits,
+                       "filename": "credits.dv"
+                       }
+
+    create_json(talk, job_file + ".json", dv_frame_rate)
 
     print
     print "----------"
-    print "Available jobs:", [t for t,v in jobs.items() if v['playlist']]
+    print "Available jobs:", [t for t, v in jobs.items() if v['playlist']]
     n = prompt_for_number("Select a job")
