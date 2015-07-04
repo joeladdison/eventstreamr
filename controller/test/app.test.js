@@ -1,3 +1,4 @@
+/*jshint multistr: true */
 process.env.NODE_ENV = 'development';
 var app = require('../app');
 var request = require('supertest');
@@ -37,17 +38,17 @@ var station = '{ \
                  "port" : "1337", \
                  "stream" : "test.ogg" \
               } \
-            }'
+            }';
 
 // -------------- Controller Test
-// check admin page 
+// check admin page
 describe('GET /admin', function(){
   it('admin page should load', function(done){
     request(app)
       .get('/admin')
       .expect(200, done);
-  })
-})
+  });
+});
 
 // -------------- Station Tests
 // register a station
@@ -56,10 +57,10 @@ describe('POST /api/station/D0:FB:DB:D4:21:15', function(){
     request(app)
       .post('/api/station/D0:FB:DB:D4:21:15')
       .expect(201, done);
-  })
-})
+  });
+});
 
-// remove station ip 
+// remove station ip
 describe('POST /api/stations/D0:FB:DB:D4:21:15/partial', function(){
   it('remove station ip', function(done){
     request(app)
@@ -68,9 +69,9 @@ describe('POST /api/stations/D0:FB:DB:D4:21:15/partial', function(){
               value: null,
               pk: 'unused',
               key: 'ip' })
-      .expect(200, done)
-  })
-})
+      .expect(200, done);
+  });
+});
 
 // update station ip
 describe('POST /api/station/D0:FB:DB:D4:21:15', function(){
@@ -78,20 +79,20 @@ describe('POST /api/station/D0:FB:DB:D4:21:15', function(){
     request(app)
       .post('/api/station/D0:FB:DB:D4:21:15')
       .expect(200, done);
-  })
-})
+  });
+});
 
 // post config as station
 describe('POST /api/station', function(){
   it('Config for station should be updated and ip address set', function(done){
     request(app)
       .post('/api/station')
-      .set('station-mgr','1') 
+      .set('station-mgr','1')
       .set('Content-Type', 'application/json')
       .send(station)
       .expect(200, done);
-  })
-})
+  });
+});
 
 // Get station information
 describe('GET /api/stations/D0:FB:DB:D4:21:15', function(){
@@ -110,29 +111,29 @@ describe('GET /api/stations/D0:FB:DB:D4:21:15', function(){
         res.body.settings.should.have.property('device_control').to.have.deep.property('api.run', '1');
         res.body.settings.should.have.property('device_control').to.have.deep.property('dvmon.run', '0');
         // devices
-        res.body.settings.should.have.property('devices').to.equal('all')
+        res.body.settings.should.have.property('devices').to.equal('all');
         // mac address
-        res.body.settings.should.have.property('macaddress').to.equal('D0:FB:DB:D4:21:15')
+        res.body.settings.should.have.property('macaddress').to.equal('D0:FB:DB:D4:21:15');
         // mixer object
-        res.body.settings.should.have.property('mixer').to.be.an('object')
+        res.body.settings.should.have.property('mixer').to.be.an('object');
         res.body.settings.mixer.host.should.equal('localhost');
         res.body.settings.mixer.port.should.equal('1234');
         // nickname
-        res.body.settings.should.have.property('nickname').to.equal('stationtest')
+        res.body.settings.should.have.property('nickname').to.equal('stationtest');
         // record path
-        res.body.settings.should.have.property('record_path').to.equal('/tmp/$room/$date')
+        res.body.settings.should.have.property('record_path').to.equal('/tmp/$room/$date');
         // roles array
-        res.body.settings.should.have.property('roles').to.be.an('array')
+        res.body.settings.should.have.property('roles').to.be.an('array');
         res.body.settings.roles.should.contain.an.item.with.property('role', 'mixer');
         res.body.settings.roles.should.contain.an.item.with.property('role', 'record');
         res.body.settings.roles.should.contain.an.item.with.property('role', 'ingest');
         res.body.settings.roles.should.contain.an.item.with.property('role', 'stream');
         // room
-        res.body.settings.should.have.property('room').to.be.empty
+        res.body.settings.should.have.property('room').to.be.empty;
         // run
-        res.body.settings.should.have.property('run').to.be.equal('0')
+        res.body.settings.should.have.property('run').to.be.equal('0');
         // stream object
-        res.body.settings.should.have.property('stream').to.be.an('object')
+        res.body.settings.should.have.property('stream').to.be.an('object');
         res.body.settings.stream.host.should.equal('1.2.3.4');
         res.body.settings.stream.password.should.equal('password');
         res.body.settings.stream.port.should.equal('1337');
@@ -140,8 +141,8 @@ describe('GET /api/stations/D0:FB:DB:D4:21:15', function(){
 
         done();
       });
-  })
-})
+  });
+});
 
 // update station nickname
 describe('POST /api/stations/D0:FB:DB:D4:21:15/partial', function(){
@@ -152,11 +153,11 @@ describe('POST /api/stations/D0:FB:DB:D4:21:15/partial', function(){
               value: 'teststation',
               pk: 'unused',
               key: 'settings.nickname' })
-      .expect(200, done)
-  })
-})
+      .expect(200, done);
+  });
+});
 
-// test nickname change 
+// test nickname change
 describe('GET /api/stations/D0:FB:DB:D4:21:15', function(){
   it('Check updated nickname', function(done){
     request(app)
@@ -167,11 +168,11 @@ describe('GET /api/stations/D0:FB:DB:D4:21:15', function(){
         // settings object
         res.body.should.have.property('settings').to.be.an('object');
         // nickname
-        res.body.settings.should.have.property('nickname').to.equal('teststation')
+        res.body.settings.should.have.property('nickname').to.equal('teststation');
         done();
       });
-  })
-})
+  });
+});
 
 // delete a station
 describe('DEL /api/station/D0:FB:DB:D4:21:15', function(){
@@ -179,13 +180,14 @@ describe('DEL /api/station/D0:FB:DB:D4:21:15', function(){
     request(app)
       .del('/api/station/D0:FB:DB:D4:21:15')
       .expect(204, done);
-  })})
+  });
+});
 
 // ensure station got removed
 describe('GET /api/stations/D0:FB:DB:D4:21:15', function(){
   it('Check successful removal', function(done){
     request(app)
       .get('/api/stations/D0:FB:DB:D4:21:15')
-      .expect(404, done)
-  })
-})
+      .expect(404, done);
+  });
+});

@@ -10,13 +10,13 @@ exports.update = function(doc) {
     json: doc
   }, function(error) {
     if (error) {
-      console.log(error)
-      feed.emit('change', {type: 'notify', content: error})
+      console.log(error);
+      feed.emit('change', {type: 'notify', content: error});
     } else {
-      feed.emit('change', {type: 'notify', content: doc})
+      feed.emit('change', {type: 'notify', content: doc});
     }
-  })
-}
+  });
+};
 
 exports.action = function(doc, station) {
   console.log("Posting Station Action");
@@ -26,13 +26,13 @@ exports.action = function(doc, station) {
     json: doc
   }, function(error) {
     if (error) {
-      console.log(error)
-      feed.emit('change', {type: 'notify', content: error})
+      console.log(error);
+      feed.emit('change', {type: 'notify', content: error});
     } else {
-      feed.emit('change', {type: 'notify', content: doc})
+      feed.emit('change', {type: 'notify', content: doc});
     }
-  })
-}
+  });
+};
 
 feed.on('change', function(info) {
   request.post({
@@ -40,7 +40,7 @@ feed.on('change', function(info) {
     json: info
   }, function(error) {
     if (error) {
-      console.log(error)
+      console.log(error);
     }
-  })
-})
+  });
+});

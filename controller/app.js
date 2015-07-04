@@ -1,4 +1,4 @@
-'strict'
+'strict';
 
 /**
  * Module dependencies.
@@ -11,7 +11,7 @@ var path = require('path');
 var request = require('request');
 
 // config
-var config = require('../config.json')
+var config = require('../config.json');
 
 var app = express();
 
@@ -34,31 +34,31 @@ if ('development' == process.env.NODE_ENV) {
   module.exports = app;
 }
 
-app.locals(config.event)
+app.locals(config.event);
 
-app.get('/admin', adminroutes.dashboard)
+app.get('/admin', adminroutes.dashboard);
 
-app.get('/api/:db', api.listDocs)
-app.get('/api/:db/:id', api.getDocument)
-app.post('/api/:db/:id/partial', api.partial)
+app.get('/api/:db', api.listDocs);
+app.get('/api/:db/:id', api.getDocument);
+app.post('/api/:db/:id/partial', api.partial);
 
-app.post('/api/station', api.storeStation)
-app.post('/api/station/:macaddress', api.registerStation)
-app.post('/api/station/:macaddress/action', api.actionStation)
-app.del('/api/station/:macaddress', api.deleteStation)
+app.post('/api/station', api.storeStation);
+app.post('/api/station/:macaddress', api.registerStation);
+app.post('/api/station/:macaddress/action', api.actionStation);
+app.del('/api/station/:macaddress', api.deleteStation);
 
-var server = http.createServer(app)
-var io = require('socket.io').listen(server)
+var server = http.createServer(app);
+var io = require('socket.io').listen(server);
 
 server.listen(app.get('port'), function(){
   console.log('Eventstreamr controller listening on port ' + app.get('port'));
 });
 
 var updates = io.sockets.on('connection', function (socket) {
-  console.log('new change subscriber connected.')
+  console.log('new change subscriber connected.');
 });
 
 app.post('/feed', function(req, res) {
-  updates.emit('change', req.body)
-  res.send(200)
-})
+  updates.emit('change', req.body);
+  res.send(200);
+});
