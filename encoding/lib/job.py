@@ -1,3 +1,4 @@
+import json
 import os
 import subprocess
 
@@ -35,7 +36,7 @@ def create_mlt(talk, output_file, dv_frame_rate):
 
 def create_json(talk, output_file, dv_frame_rate):
     out_dict = {"schedule_id": talk["schedule_id"]}
-    out_dict["main"] = talk["main"]
+    out_dict["filename"] = talk["filename"]
     out_dict["intro"] = talk["intro"]
     out_dict["credits"] = talk["credits"]
     out_dict["in_time"] = str(
@@ -44,9 +45,8 @@ def create_json(talk, output_file, dv_frame_rate):
         int(talk['cut_list'][-1]['out'].total_seconds()) * dv_frame_rate)
     out_dict["file_list"] = [os.path.join(cut["filepath"], cut["filename"])
                              for cut in talk["cut_list"]]
-    from json import dump
     with open(output_file, "w") as f:
-        dump(out_dict, f)
+        json.dump(out_dict, f)
 
 
 def create_title(talk, output_file):

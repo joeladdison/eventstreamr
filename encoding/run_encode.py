@@ -1,137 +1,185 @@
 #!/usr/bin/python
 
-from sys import argv, stderr, stdout
-from json import loads
+import atexit
+import json
 import os
-from os.path import join
 import re
+import shutil
+import subprocess
+import sys
+
+import moviepy.editor as mpy
 
 
-def f():
-    stderr.flush()
-    stdout.flush()
+BASE_CONFIG_FILENAME = 'test/config.json'
 
 
-def header(title):
-    print "#" * 120
-    print "#" + (" " * 118) + "#"
-    print "#" + title.center(118) + "#"
-    print "#" + (" " * 118) + "#"
-    print "#" * 120
-    f()
-
-
-def call(cmd, *args, **kwargs):
-    from subprocess import call
-    print "Command: %r" % (cmd, )
-    f()
-    kwargs.update(stdout=stdout, stderr=stderr, cwd=job_folder)
-    r = call(cmd, *args, **kwargs)
-    if r != 0:
-        print "Failed to call %r" % cmd
-        exit(r)
-    f()
 
 
 def do_rsync(from_file, to_file):
-    call(["rsync", "-u", from_file, to_file])
+    subprocess.call(["rsync", "-u", from_file, to_file])
     print "Do something like rsync from %r to %r" % (from_file, to_file)
-    f()
-
-# Install perlmagick & xvfb
+    flush_output()
 
 
-melt_base = ["xvfb-run", "-a", "melt", "-silent"]
+def setup(talk_config_filename):
+    config = {}
 
-if __name__ == "__main__":
+    with open(talk_config_filename, 'r') as f:
+        try:
+            config['talk'] = json.load(f)
+            talk_config = config['talk']
+        except Exception as e: # dunno
+            print "Error loading talk config:"
+            print e
+            sys.exit(1)
 
-    json = loads(argv[-1])
+    # setup directory structure:
+    # test/
+    #   queue/
+    #       39.json
+    #   output/
+    #       Sprinting_for_Beginners-Tennessee_Leeuwenburg.mp4
+    #       Sprinting_for_Beginners-Tennessee_Leeuwenburg.ogv
+    #       Sprinting_for_Beginners-Tennessee_Leeuwenburg.ogg
+    
+    with open(BASE_CONFIG_FILENAME, 'r') as f:
+        try:
+            base = json.load(f)
+            print base
+        except Exception: # dunno
+            print "Error loading base config:"
+            print e
+            sys.exit(1)
 
-    extensions = json["extensions"]
 
-    server = json["server"]
-    base_folder = json["base-folder"]
-    schedule_id = str(json["schedule_id"])
+    try:
+        os.makedirs('queue/output')
+    except OSError:
+        pass
 
-    job_folder = os.path.abspath(json["local_save"] + " - " + schedule_id)
-    if not os.path.exists(job_folder):
-        os.mkdir(job_folder)
+    job_folder = 'queue/output'
+    return base, talk_config
 
-    import atexit
-    import shutil
-    atexit.register(shutil.rmtree, job_folder)
+def create_text_overlay_clip(background_filename, text, duration):
+    # Set up the background image
+    # base_clip = mpy.ImageClip(background_filename)
+    base_clip = mpy.ColorClip((720,576), (255,0,0)) # in lieu of real one
+    base_clip = base_clip.set_duration(duration)
 
-    extensions = json["extensions"]
+    # Set up the text itself
+    text_clip = mpy.TextClip(text, font="FreeSans", fontsize=40)
+    text_clip = text_clip.set_pos('center')
+    text_clip = text_clip.set_duration(duration)
 
-    server = json["server"]
-    base_folder = json["base-folder"]
-    schedule_id = str(json["schedule_id"])
+    # Overlay the text onto the background
+    full_clip = mpy.CompositeVideoClip([base_clip, text_clip])
+    full_clip.fps = 24
+    return full_clip
 
-    talk_file = json["main"]["filename"]
-    talk_local_file = join(job_folder, talk_file)
 
-    intro_file = json["intro"]["filename"]
-    intro_local_file = join(job_folder, "..", intro_file)
-    title = json["intro"]["title"]
-    presenters = json["intro"]["presenters"]
-    date_given = re.match(".*/(20[0-9][0-9]-[0-9][0-9]-[0-9][0-9])_.*[.]dv", json["file_list"][0])
-    date_given = date_given and date_given.group(1) or ""
+def create_title_clip(background_filename, title, presenters, duration):
+    print("Setting up title image")
+    text = "{0}\n\n{1}".format(title, presenters)
+    return create_text_overlay_clip(background_filename, text, duration)
 
-    credits_file = json["credits"]["filename"]
-    credits_local_file = join(job_folder, "..", credits_file)
-    credits_text = json["credits"]["text"]
 
-    header("Rsyncing files down")
-    do_rsync(server + ":" + join(base_folder, talk_file), talk_local_file)
-    do_rsync(server + ":" + join(base_folder, intro_file), intro_local_file)
-    do_rsync(server + ":" + join(base_folder, credits_file), credits_local_file)
+def create_credits_clip(background_filename, text, duration):
+    print("Creating credits image")
+    return create_text_overlay_clip(background_filename, text, duration)
 
-    py_folder = os.path.dirname(os.path.realpath(__file__))
 
-    header("Creating Title Image")
-    intro_image = join(job_folder, schedule_id + "-intro-img.png")
-    call([join(py_folder, "../../encoding/gen_image.pl"), intro_image, title + "\n" + presenters])
+def create_talk_clip(files=[], start=0, end=None):
+    print("Creating main talk")
+    clip_list = []
 
-    header("Creating Credits Image")
-    credits_image = join(job_folder, schedule_id + "-credits-img.png")
-    call([join(py_folder, "../../encoding/gen_image.pl"), credits_image, credits_text])
+    print files[-1]
+    #if end and end >= 0:
+        #last_clip = mpy.VideoFileClip(files.pop())
+        #last_clip = last_clip.subclip(0, end)
 
-    header("Combining Title Image and Title Background")
-    intro_watermarked = join(job_folder, schedule_id + "-intro.dv")
-    call(melt_base + [intro_local_file, '-filter', 'watermark:' + intro_image, 'in=0', 'out=50',
-                    'composite.progressive=1', 'producer.align=centre', 'composite.valign=c', 'composite.halign=c',
-                    '-consumer', 'avformat:' + intro_watermarked])
+    for dv in files:
+        clip = mpy.VideoFileClip(dv)
+        clip_list.append(clip)
 
-    header("Combining Credits Image and Credits Background")
-    credits_watermarked = join(job_folder, schedule_id + "-credits.dv")
-    call(melt_base + [credits_local_file, '-filter', 'watermark:' + credits_image,
-                    'composite.progressive=1', 'producer.align=centre', 'composite.valign=c', 'composite.halign=c',
-                    '-consumer', 'avformat:' + credits_watermarked])
+    #clip_list.append(last_clip)
+    print clip_list
 
-    base_output_file = join(job_folder, schedule_id + "-out.")
+    full_clip = mpy.concatenate(clip_list)
+    #full_clip = full_clip.set_start(start, change_end=False)
+    full_clip.fps = 24
+    return full_clip
+    
+    
+def encode_file(video, base_filename, extension):
+    print "Encoding {0}: ".format(extension),
+    filename = "{0}.{1}".format(base_filename, extension)
 
-    def do_encode(extension):
-        header("Creating a file. Ext: %s" % extension)
+    if extension in ['mp4', 'ogv']:
+        video.write_videofile(filename)
 
-        if extension == "mp4":
-            args = melt_base + [intro_watermarked, talk_local_file, credits_watermarked, '-consumer',
-                    'avformat:' + base_output_file + extension, "progressive=1", "vcodec=libx264"]
-        elif extension == "ogv":
-            args = melt_base + [intro_watermarked, talk_local_file, credits_watermarked, '-consumer',
-                    'avformat:' + base_output_file + extension, "progress=1", "threads=0", "vb=1000k", "quality=good",
-                    "deadline=good", "deinterlace=1", "deinterlace_method=yadif"]
-        elif extension == "ogg":
-            args = ["ffmpeg", "-i", talk_local_file, "-vn", "-acodec", "libvorbis", "-aq", "6", "-metadata",
-                    "TITLE=%s" % title, "-metadata", "SPEAKER=%s" % presenters, "-metadata", "DATE=%s" % date_given, "-metadata",
-                    "EVENT=PyconAu", base_output_file + extension]
-        else:
-            args = melt_base + [intro_watermarked, talk_local_file, credits_watermarked, '-consumer',
-                    "avformat:" +  base_output_file + extension]
-        call(args)
+    elif extension in ['ogg']:
+        video.audio.to_audiofile(filename)
 
+
+def process_talk(config, talk):
+
+    #server = config["server"]
+    base_folder = config["base_dir"]
+    title = talk['title']
+    presenters = talk['presenters']
+
+    # Create intro (title) slide
+    title_bg = config['title_background']
+    title_clip = create_title_clip(
+        background_filename=title_bg,
+        title=title,
+        presenters=presenters,
+        duration=2,
+    )
+
+    # Merge all files from the talk proper
+    print talk['file_list']
+    talk_clip = create_talk_clip(
+        files=talk['file_list'],
+        start=talk['in_time'],
+        end=talk['out_time'],
+    )
+
+    # Create credits slide
+    credits_bg = config['credits_background']
+    credits_clip = create_credits_clip(
+        background_filename=credits_bg,
+        text=talk['credits'],
+        duration=2
+    )
+
+    # Merge all clips together and encode
+    video = mpy.concatenate([title_clip, talk_clip, credits_clip])
+
+    filename = "{0} - {1}".format(title, presenters)
+    output_path = os.path.join(config['base_dir'], 'output', filename)
+
+    for ext in ['mp4', 'ogv', 'ogg']:
+        encode_file(video, output_path, ext)
+
+    
+    #header("Rsyncing files down")
+    #do_rsync(server + ":" + os.path.join(base_folder, talk_file), talk_local_file)
+    #do_rsync(server + ":" + os.path.join(base_folder, intro_file), intro_local_file)
+    #do_rsync(server + ":" + os.path.join(base_folder, credits_file), credits_local_file)
+
+    #py_folder = os.path.dirname(os.path.realpath(__file__))
+
+    #credits_image = os.path.join(job_folder, schedule_id + "-credits-img.png")
+    #subprocess.call([os.path.join(py_folder, "gen_image.pl"), credits_image, credits_text])
+
+    #base_output_file = os.path.join(job_folder, schedule_id + "-out.")
+
+    """
     from multiprocessing import Process
     processes = []
-    for ext in extensions:
+    for ext in EXTENSIONS:
         p = Process(target=do_encode, args=(ext,))
         p.start()
         processes.append((ext, p))
@@ -141,6 +189,19 @@ if __name__ == "__main__":
         if p.exitcode != 0:
             print "Failed to complete encoding of %s with code %d" % (ext, p.exitcode)
             exit(p.exitcode)
+    """
 
-    for ext in extensions:
-        do_rsync(base_output_file + ext, server + ":" + join(base_folder, schedule_id + "-out." + ext))
+    #for ext in EXTENSIONS:
+        #do_rsync(base_output_file + ext, server + ":" + os.path.join(base_folder, schedule_id + "-out." + ext))
+
+
+if __name__ == '__main__':
+
+    if len(sys.argv) > 1:
+        talk_config_filename = sys.argv[1]
+    else:
+        print "Usage: enter a json file from the todo queue."
+        sys.exit(1)
+        
+    config, talk = setup(talk_config_filename)
+    process_talk(config, talk)
