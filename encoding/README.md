@@ -1,8 +1,7 @@
 Encoding and queue management
 =============================
-q-mgr.py     - Used to parse schedule data, mark start/end cuts, and create encode jobs
-q-run.py     - Used to execute encode jobs
-gen_image.pl - Creates a text based png for titles and credits in videos
+queue_manager.py  - Used to parse schedule data, mark start/end cuts, and create encode jobs
+run_encode.py     - Used to execute encode jobs
 
 
 youtube uploader

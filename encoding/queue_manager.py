@@ -21,13 +21,12 @@ DV_FRAME_RATE = 25
 def setup(config_filename):
     config = schedule.open_json(config_filename)
 
-    base_dir = os.path.abspath(config['base_dir'])
-    schedule_file = os.path.join(base_dir, config['schedule'])
-    recording_dir = os.path.join(base_dir, config['recording_dir'])
-    queue_todo_dir = os.path.join(base_dir, 'queue', 'todo')
+    schedule_file = config['schedule']
+    recording_dir = config['dirs']['recordings']
+    queue_dir = config['dirs']['queue']
 
     try:
-        os.makedirs(queue_todo_dir)
+        os.makedirs(queue_dir)
     except OSError:
         pass
 
@@ -43,10 +42,10 @@ def setup(config_filename):
         schedule.link_dv_files(talk, recording_dir, DV_MATCH_WINDOW, DV_FORMAT)
     jobs = {t['schedule_id']: t for t in talks if t['playlist']}
 
-    return jobs, queue_todo_dir
+    return jobs, queue_dir
 
 
-def run_interface(jobs, todo_dir):
+def run_interface(jobs, queue_dir):
     available_jobs = [t for t,v in jobs.items() if v['playlist']]
     if not available_jobs:
         print "No available jobs."
@@ -64,6 +63,7 @@ def run_interface(jobs, todo_dir):
             #subprocess.Popen(['vlc'] + dv_files, stderr=DEVNULL)
             #pass
 
+        # Show some basic information about the talk
         print
         print "Title:", talk['title']
         if 'presenters' in talk:
@@ -77,46 +77,40 @@ def run_interface(jobs, todo_dir):
 
         print
 
-        # our users always type sensible things...right
+        # Prompt the operator for required details
         start_file = ui.prompt_for_number("Start file", 0)
         start_offset = None
         while start_offset is None:
             start_offset = ui.prompt_for_time("Start time offset", 0)
+
         end_file = ui.prompt_for_number("End file", len(talk['playlist'])-1)
         end_offset = None
         while end_offset is None:
             end_offset = ui.prompt_for_time("End time offset")
 
-        credits = None
-        while credits is None:
-            credits = ui.prompt("Credits")
+        credits = ui.prompt("Credits", "")
 
-        intro_file = ui.prompt("Intro File", "intro.dv")
+        # Calculate the time offsets from operator input
+        # something involving DV_FRAME_RATE here
+        file_list = dv_files[start_file:end_file+1]
 
-        # this sets up the cut_list which will be used later
-        talk['cut_list'] = talk['playlist'][start_file:end_file+1]
-        talk['cut_list'][0]['in'] = start_offset
-        talk['cut_list'][-1]['out'] = end_offset
-
+        # Add a json file for this talk to the queue dir
         print "Creating and queuing job " + str(talk['schedule_id'])
-        job_file = os.path.join(todo_dir, str(talk['schedule_id']))
+        job_file = os.path.join(queue_dir, str(talk['schedule_id'])) + '.json'
 
-        talk["filename"] = str(talk['schedule_id']) + "-main.dv"
-        talk["intro"] = {"title": talk['title'],
-                         "filename": intro_file}
-        if "presenters" in talk:
-            talk['intro']['presenters'] = talk['presenters']
-        else:
-            if " by " in talk['title']:
-                (talk['intro']['title'], talk['intro']['presenters']) = talk['title'].split(" by ")
-            else:
-                talk['intro']['presenters'] = ""
-        talk["credits"] = {"text": credits,
-                           "filename": "credits.dv"
-                           }
+        todo = {}
+        todo["schedule_id"] = talk["schedule_id"]
+        todo["title"] = talk.get("title", "")
+        todo["presenters"] = talk.get("presenters", "")
+        todo["file_list"] = file_list
+        todo["in_time"] = "00:16:15.00"
+        todo["out_time"] = "00:00:02.00"
+        todo["credits"] = credits
 
-        job.create_json(talk, job_file + ".json", DV_FRAME_RATE)
+        with open(job_file, 'w') as f:
+            json.dump(todo, f, sort_keys=True, indent=4, separators=(',',': '))
 
+        # And start all over again!
         available_jobs = [t for t,v in jobs.items() if v['playlist']]
         if not available_jobs:
             print "No available jobs."
@@ -131,7 +125,7 @@ if __name__ == '__main__':
     if len(sys.argv) > 1:
         config_filename = sys.argv[1]
     else:
-        config_filename = 'test/config.json'
+        config_filename = 'config.json'
         
-    jobs, todo_dir = setup(config_filename)
-    run_interface(jobs, todo_dir)
+    jobs, queue_dir = setup(config_filename)
+    run_interface(jobs, queue_dir)
