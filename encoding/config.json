@@ -1,0 +1,12 @@
+{
+    "dirs": {
+        "queue": "test/queue/",
+        "recordings": "/localbackup/av",
+        "output": "test/output"
+    },
+    "schedule": "test/schedule.json",
+    "backgrounds": {
+        "title": "media/title.jpg",
+        "credits": "media/credits.jpg"
+    }
+}
