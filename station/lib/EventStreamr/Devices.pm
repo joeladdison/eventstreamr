@@ -50,7 +50,7 @@ sub dv {
       $vendor_name = read_file("$dv/vendor_name") if ( -e "$dv/vendor_name" );
       chomp $vendor_name;
       $vendor_name = "Canopus" if ( $vendor_name eq "0x002011" );
-      
+
       unless ($vendor_name eq "Linux Firewire") {
         my $guid = read_file("$dv/guid");
         my $model = "unknown";
