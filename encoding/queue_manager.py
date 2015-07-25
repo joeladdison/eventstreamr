@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
 import urllib2
@@ -59,9 +59,9 @@ def run_interface(jobs, queue_dir):
         dv_files = [os.path.join(dv_file['filepath'], dv_file['filename'])
                     for dv_file in talk['playlist']]
 
-        #with open(os.devnull, 'wb') as DEVNULL:
-            #subprocess.Popen(['vlc'] + dv_files, stderr=DEVNULL)
-            #pass
+        with open(os.devnull, 'wb') as DEVNULL:
+            subprocess.Popen(['vlc'] + dv_files, stderr=DEVNULL)
+            pass
 
         # Show some basic information about the talk
         print
@@ -81,12 +81,15 @@ def run_interface(jobs, queue_dir):
         start_file = ui.prompt_for_number("Start file", 0)
         start_offset = None
         while start_offset is None:
-            start_offset = ui.prompt_for_time("Start time offset", 0)
+            start_offset = ui.prompt("Start time offset", "00:00")
 
         end_file = ui.prompt_for_number("End file", len(talk['playlist'])-1)
         end_offset = None
         while end_offset is None:
-            end_offset = ui.prompt_for_time("End time offset")
+            end_offset = ui.prompt("End time offset [mm:ss]")
+
+        # some error checking with the offsets would be nice
+        # also auto-calculating 
 
         credits = ui.prompt("Credits", "")
 
@@ -103,8 +106,8 @@ def run_interface(jobs, queue_dir):
         todo["title"] = talk.get("title", "")
         todo["presenters"] = talk.get("presenters", "")
         todo["file_list"] = file_list
-        todo["in_time"] = "00:16:15.00"
-        todo["out_time"] = "00:00:02.00"
+        todo["in_time"] = "00:{0}.00".format(start_offset)
+        todo["out_time"] = "00:{0}.00".format(end_offset)
         todo["credits"] = credits
 
         with open(job_file, 'w') as f:
