@@ -59,7 +59,12 @@ class State(object):
         self.command_config_path = None
 
         self.supervisor = process.SupervisorProxy()
-        # self.supervisor.connect()
+        # Connect to Supervisor if configured
+        supervisor_config = self.local_config.get('supervisor')
+        if (supervisor_config and supervisor_config.get('url') and
+                supervisor_config.get('sock')):
+            self.supervisor.connect(
+                supervisor_config['url'], supervisor_config['sock'])
 
     @classmethod
     def from_files(
@@ -101,8 +106,14 @@ def load_local_config(config_path):
 
 def blank_local_config():
     return {
-        "controller": "http://10.4.4.10:5001",
-        "script_bin": "bin",
+        'controller': 'http://10.4.4.10:5001',
+        'script_bin': 'bin',
+        'work_directory': '/home/av/eventstreamr',
+        'supervisor': {
+            "url": '',
+            "sock": '',
+            'ini_dir': ''
+        }
     }
 
 
@@ -286,13 +297,18 @@ def create_process_config(state, device, command):
     # Make a name that complies with supervisor naming guidelines
     program_name = name.replace(':', '_').replace(']', '_')
 
+    supervisor_config = state.local_config.get('supervisor', {})
+    if not supervisor_config.get('ini_dir'):
+        logger.warn('Supervisor is not configured. Not able to run process')
+        return
+
     # Write command to file
     command_config = {
         'command': command
     }
     command_file_name = "{0}.json".format(name)
     command_file_path = os.path.join(
-        state.local_config['supervisor_config'], command_file_name)
+        supervisor_config['ini_dir'], command_file_name)
     with open(command_file_path, 'w') as command_file:
         json.dump(command_file, command_config)
 
@@ -314,13 +330,13 @@ def create_process_config(state, device, command):
 
     # Store ini file path and process name
     file_name = "{0}.ini".format(name)
-    ini_path = os.path.join(state.local_config['supervisor_config'], file_name)
+    ini_path = os.path.join(supervisor_config['ini_dir'], file_name)
     with open(ini_path, 'w') as config_file:
         config.write(config_file)
 
     # Return process name
     settings = state.device_control.setdefault(device['id'], {})
-    settings['supervisor_conf'] = ini_path
+    settings['supervisor_ini'] = ini_path
     settings['program_name'] = program_name
     settings['name'] = name
 
