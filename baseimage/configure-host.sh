@@ -35,7 +35,7 @@ echo "
 --- eventstreamr HOST CONFIGURATION SCRIPT ---
 
 This should be run after imaging to setup some initial stuff but the
-main thing being setting the hostname and turning eventstreamr on. 
+main thing being setting the hostname and turning eventstreamr on.
 "
 
 # some checks before continuing
@@ -85,9 +85,9 @@ if [ -n "$ipaddress" ]; then
     else
         netmask="255.255.255.0"
     fi
-   
+
     gateway_guess=`echo $ipaddress | cut -d"." -f1-3`
-    gateway_guess="$gateway_guess.1" 
+    gateway_guess="$gateway_guess.1"
     echo -n "gateway ($gateway_guess): "
     read gateway
     if [ -n "$gateway"  ]; then
@@ -177,7 +177,7 @@ iface lo inet loopback
 auto eth0
 iface eth0 inet static
     address $ipaddress
-    network $netmask
+    netmask $netmask
     gateway $gateway
     dns-nameservers $dns
 " > /etc/network/interfaces
