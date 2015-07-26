@@ -62,7 +62,7 @@ After you've finished with one talk, a json file containing the required informa
         "file_list": [
             "/localbackup/av/Roosevelt&Kennedy/20150802/2015-08-02_16-09-12.dv",
             "/localbackup/av/Roosevelt&Kennedy/20150802/2015-08-02_16-15-54.dv",
-                "/localbackup/av/Roosevelt&Kennedy/20150802/2015-08-02_16-37-32.dv"
+            "/localbackup/av/Roosevelt&Kennedy/20150802/2015-08-02_16-37-32.dv"
         ],
         "in_time": "00:16:10.00",
         "out_time": "00:00:04.00",
@@ -92,14 +92,5 @@ Requires a yaml config file with your develop api details, located at ~/.googlea
 
     client_id: client_id_here
     client_secret: client_secret_here
-~                                                                               
+
 See `youtube_uploader.py`.
-~                                                                               
-~                                                                               
-~                                                                               
-~                                                                               
-~                                                                               
-~                                                                               
-~                                                                               
-~                                                                               
-~                             
