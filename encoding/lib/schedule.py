@@ -62,7 +62,7 @@ def link_dv_files(talk, recording_root, dv_match_window, dv_format):
             #if time and start_window <= time <= end_window:
             dv_file = {
                 'filename': filename,
-                'filepath': talk_path
+                'filepath': os.path.join(talk['room'], talk['date'])
             }
             talk['playlist'].append(dv_file)
             talk['playlist'].sort()

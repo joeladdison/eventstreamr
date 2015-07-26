@@ -1,8 +1,8 @@
 {
     "dirs": {
-        "queue": "test/queue/",
-        "recordings": "/localbackup/av/",
-        "output": "test/output/"
+        "queue": "/localbackup/queue/",
+        "recordings": "/localbackup/recordings/",
+        "output": "/localbackup/output/"
     },
     "schedule": "test/schedule.json",
     "backgrounds": {
