@@ -21,7 +21,7 @@ Station related resources of *Eventstreamr controller API*.
       {
         "roles":[],
         "nickname":"",
-        "macaddress":"00-21-5c-02-02-27",
+        "station_id":"00-21-5c-02-02-27",
         "room":""
       },
     "_id":"xZljygFs4qRG3jaQ"
@@ -31,7 +31,7 @@ Station related resources of *Eventstreamr controller API*.
 
 #### Get Station
 
-* `GET /api/station/[MACADDRESS]` will return the specified station.
+* `GET /api/station/[STATION_ID]` will return the specified station.
 
 ```json
 {
@@ -40,7 +40,7 @@ Station related resources of *Eventstreamr controller API*.
     {
       "roles":[],
       "nickname":"",
-      "macaddress":"00-21-5c-02-02-27",
+      "station_id":"00-21-5c-02-02-27",
       "room":""
     },
   "_id":"xZljygFs4qRG3jaQ"
@@ -54,7 +54,7 @@ Station related resources of *Eventstreamr controller API*.
 
 ```json
 {
-  "macaddress": "00-B0-D0-86-BB-F7",
+  "station_id": "00-B0-D0-86-BB-F7",
   "roles": [
     "controller"
   ],
@@ -66,7 +66,7 @@ This will return `201 Created` along with the current JSON representation of the
 
 #### Register Station
 
-* `PUT /api/station/[MACADDRESS]` will update a station with the parameters passed.
+* `PUT /api/station/[STATION_ID]` will update a station with the parameters passed.
 
 ```json
 {
@@ -75,11 +75,11 @@ This will return `201 Created` along with the current JSON representation of the
 ```
 
 This will return a `200 OK` if the update was a success along with the current JSON representation of the station.
-    
-    
+
+
 #### Delete Station
 
 
-* `DELETE /api/station/[MACADDRESS]`
+* `DELETE /api/station/[STATION_ID]`
 
 This will return `204 No Content`

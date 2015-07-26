@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-use Dancer; # libdancer-perl 
+use Dancer; # libdancer-perl
 use v5.14;
 use FindBin qw($Bin);
 use lib "$Bin/../lib";
@@ -42,7 +42,7 @@ options qr{.*} => sub {
 # MAC confirm, returns settings if correct
 get '/settings/:mac' => sub {
   my $data->{mac} = params->{mac};
-  if ($data->{mac} == $self->{config}{macaddress}) {
+  if ($data->{mac} == $self->{config}{station_id}) {
     $data->{config} = $self->{config};
   } else {
     status '400';
@@ -64,12 +64,12 @@ get '/settings' => sub {
 post '/settings/:mac' => sub {
   my $data->{mac} = params->{mac};
   $data->{body} = from_json(request->body);
-  if ($data->{mac} eq "$self->{config}{macaddress}") {
+  if ($data->{mac} eq "$self->{config}{station_id}") {
     my $manager = $self->{config}{manager}{pid};
     $self->{config} = $data->{body}{settings};
     $self->{config}{manager}{pid} = $manager;
     info("Config recieved restarting Manager at: $manager");
-    kill '10', $self->{config}{manager}{pid}; 
+    kill '10', $self->{config}{manager}{pid};
     header 'Access-Control-Allow-Origin' => '*';
     return;
   } else {
@@ -93,7 +93,7 @@ post '/command/:command' => sub {
   my $command = params->{command};
   my $data = from_json(request->body);
   info("Received Command: $command for $data->{id}");
-  
+
   if ($data->{id} eq 'all') {
     info("Setting $command for all");
     # All devices
@@ -103,7 +103,7 @@ post '/command/:command' => sub {
       when ("restart")  { $self->{config}{run} = 2; }
       default { header 'Access-Control-Allow-Origin' => '*'; status '400'; return qq("status":"unkown command"}); }
     }
-  } else {  
+  } else {
     # Individual Devices
     info("Setting $command for $data->{id}");
     given ($command) {
@@ -114,7 +114,7 @@ post '/command/:command' => sub {
     }
   }
 
-  kill '10', $self->{config}{manager}{pid}; 
+  kill '10', $self->{config}{manager}{pid};
   header 'Access-Control-Allow-Origin' => '*';
   return;
 };
@@ -131,7 +131,7 @@ post '/manager/update' => sub {
 # Trigger reboot
 post '/manager/reboot' => sub {
   info("triggering reboot");
-  kill '10', $self->{config}{manager}{pid}; 
+  kill '10', $self->{config}{manager}{pid};
   system("sudo /sbin/shutdown -r -t 5 now &");
   header 'Access-Control-Allow-Origin' => '*';
   return;

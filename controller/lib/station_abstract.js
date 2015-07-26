@@ -6,7 +6,7 @@ exports.update = function(doc) {
   console.log("Posting Station Config");
   console.log(doc);
   request.post({
-    uri: 'http://' + doc.ip + ':3000/settings/' + doc.settings.macaddress,
+    uri: 'http://' + doc.ip + ':3000/settings/' + doc.settings.station_id,
     json: doc
   }, function(error) {
     if (error) {

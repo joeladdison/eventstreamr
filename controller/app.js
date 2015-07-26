@@ -43,9 +43,9 @@ app.get('/api/:db/:id', api.getDocument);
 app.post('/api/:db/:id/partial', api.partial);
 
 app.post('/api/station', api.storeStation);
-app.post('/api/station/:macaddress', api.registerStation);
-app.post('/api/station/:macaddress/action', api.actionStation);
-app.del('/api/station/:macaddress', api.deleteStation);
+app.post('/api/station/:station_id', api.registerStation);
+app.post('/api/station/:station_id/action', api.actionStation);
+app.del('/api/station/:station_id', api.deleteStation);
 
 var server = http.createServer(app);
 var io = require('socket.io').listen(server);
