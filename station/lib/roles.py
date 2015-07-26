@@ -142,9 +142,11 @@ ROLE_FUNCTIONS = {
 
 
 def run_stop(state, device):
+    current_time = time.time()
     did = device['id']
 
     control = state.device_control.setdefault(did, {})
+    status = state.status.setdefault(did, {})
 
     # Build command for execuion and save it for future use
     command = control.get('command')
@@ -163,18 +165,98 @@ def run_stop(state, device):
             'Command for %s - %s: %s', device['id'], device['type'], command)
 
     # Only deal with internal services. External are managed by web
-    if device['role'] in ('ingest', 'mixer', 'stream', 'record'):
-        run_type = control.get('run', 0)
-        if run_type == 1:
+    run_type = control.get('run', None)
+    if state.station_config['run'] == 1 and (
+            run_type in (None, 1) or device['type'] == 'internal'):
+        # Ensure device is set to be running
+        control['run'] = 1
+
+        # Get current state
+        program_name = control.get('program_name')
+        running = False
+        if program_name:
+            proc_state = state.supervisor.process_state(program_name)
+            running = proc_state['statename'] == 'RUNNING'
+
+        if not running:
             # Start device
-            prog_name = config.create_process_config(state, device, command)
-            state.supervisor.start_process(prog_name)
-        elif run_type == 2:
-            # Restart device
-            state.supervisor.restart_process(control['program_name'])
-        elif run_type == 0:
-            # Stop device
-            state.supervisor.stop_process(control['program_name'])
+            if not control.get('timestamp'):
+                control['timestamp'] = current_time
+                status['running'] = 0
+                status['status'] = 'starting'
+                status['state'] = 'sfot'
+                status['type'] = device['type']
+                status['timestamp'] = current_time
+
+            if device['type'] == 'mixer':
+                logger.info('Starting DVswitch')
+            elif device['type'] == 'internal':
+                logger.info('Starting %s', did)
+            else:
+                logger.info('Connect %s to DVswitch', did)
+
+            program_name = config.create_process_config(
+                state, device, command)
+            started = state.supervisor.start_process(program_name)
+            if not started:
+                # Problem starting
+                logger.warn('Failed to start device: %s', did)
+
+                # Refresh devices
+                state.devices = devices.all()
+
+                # Force command rebuild
+                control['command'] = ''
+
+                config.post_config(state)
+
+        # Update state
+        proc_state = state.supervisor.process_state(program_name)
+
+        if proc_state['statename'] == 'RUNNING':
+            status['running'] = 1
+            status['status'] = 'started'
+            status['state'] = 'hard'
+            control['timestamp'] = current_time
+        else:
+            status['running'] = 0
+            status['status'] = 'stopped'
+            status['state'] = 'hard'
+    elif run_type is not None:
+        # Stop device
+        program_name = control['program_name']
+        stopped = state.supervisor.stop_process(program_name)
+        if stopped:
+            # Process stopped
+            logger.info('Stopped %s', did)
+
+            control['running'] = 0
+
+            # Get new state
+            # proc_state = state.supervisor.process_state(program_name)
+            control['timestamp'] = current_time
+            status['running'] = 0
+            status['status'] = 'stopped'
+            status['state'] = 'hard'
+
+        control['timestamp'] = 0
+
+    if run_type == 2 and not control['running']:
+        # Restart device
+        logger.info('Restarting %s', did)
+
+        control['run'] = 1
+        control['timestamp'] = current_time
+        control['command'] = ''
+
+        # Refresh devices
+        state.devices = devices.all()
+
+        # Update status
+        status['status'] = 'restarting'
+        status['state'] = 'hard'
+
+        config.write_config(state.station_config_path, state.station_config)
 
     # TODO: Add more status information to state
     config.post_config(state)

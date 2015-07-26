@@ -58,7 +58,7 @@ class State(object):
         self.station_config_path = None
         self.command_config_path = None
 
-        self.supervisor = process.Supervisor()
+        self.supervisor = process.SupervisorProxy()
         # self.supervisor.connect()
 
     @classmethod
@@ -283,7 +283,8 @@ def get_hostname():
 
 def create_process_config(state, device, command):
     name = "{0}_{1}".format(device['type'], device['id'])
-    program_name = 'program:{0}'.format(name)
+    # Make a name that complies with supervisor naming guidelines
+    program_name = name.replace(':', '_').replace(']', '_')
 
     # Write command to file
     command_config = {
@@ -302,13 +303,14 @@ def create_process_config(state, device, command):
 
     # Create ini file
     config = configparser.RawConfigParser()
-    config.add_section(program_name)
-    config.set(program_name, 'command', process)
-    config.set(program_name, 'numprocs', '1')
-    config.set(program_name, 'autorestart', 'true')
-    config.set(program_name, 'user', state.local_config['user'])
-    config.set(program_name, 'directory', state.local_config['work_directory'])
-    config.set(program_name, 'umask', '0027')
+    header = 'program:{0}'.format(program_name)
+    config.add_section(header)
+    config.set(header, 'command', process)
+    config.set(header, 'numprocs', '1')
+    config.set(header, 'autorestart', 'true')
+    config.set(header, 'user', state.local_config['user'])
+    config.set(header, 'directory', state.local_config['work_directory'])
+    config.set(header, 'umask', '0027')
 
     # Store ini file path and process name
     file_name = "{0}.ini".format(name)

@@ -2,7 +2,15 @@ import supervisor.xmlrpc
 import xmlrpclib
 
 
-class Supervisor(object):
+class SupervisorProxy(object):
+    """
+    Proxy to communicate with Supervisor via XMLRPC
+
+    s = SupervisorProxy()
+    s.connect(
+        'http://127.0.0.1',
+        'unix:///home/user/lib/supervisor/tmp/supervisor.sock')
+    """
 
     def __init__(self):
         self.proxy = None
@@ -20,25 +28,16 @@ class Supervisor(object):
     def process_state(self, name):
         return self._supervisor.getProcessInfo(name)
 
-    def start_process(self, name):
-        result = self._supervisor.startProcess(name)
-        return result
+    def start_process(self, name, wait=True):
+        return self._supervisor.startProcess(name, wait)
 
     def restart_process(self, name):
-        result = self._supervisor.stopProcess(name, wait=True)
+        result = self.stop_process(name, True)
         if not result:
             # Restarting failed, as process did not stop
             return False
 
-        result = self._supervisor.startProcess(name)
-        return result
+        return self.start_process(name)
 
-    def stop_process(self, name):
-        result = self._supervisor.stopProcess(name, wait=True)
-        return result
-
-
-# s = Supervisor()
-# s.connect(
-#     'http://127.0.0.1',
-#     'unix:///home/lars/lib/supervisor/tmp/supervisor.sock')
+    def stop_process(self, name, wait=True):
+        return self._supervisor.stopProcess(name, wait)
