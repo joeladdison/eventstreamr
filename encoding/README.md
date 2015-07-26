@@ -55,7 +55,21 @@ Run `queue_manager.py`. You'll be given a list of talks for which possible match
 
 For both the start and end offsets, enter the time in minutes and seconds (e.g. `01:56`). The final video will begin from the start time in the start file, continue through all intermediate  files, and finish at the end time in the end file.
 
-After you've finished with one talk, a json file containing the required information for encoding will be created in the queue directory you set in `config.json`. The filename will be based on the schedule id of the talk (e.g. `test/queue/39.json`).
+After you've finished with one talk, a json file containing the required information for encoding will be created in the queue directory you set in `config.json`. The filename will be based on the schedule id of the talk (e.g. `test/queue/39.json`). The generated json will look something like this:
+
+    {
+        "credits": "thanks peeps",
+        "file_list": [
+            "/localbackup/av/Roosevelt&Kennedy/20150802/2015-08-02_16-09-12.dv",
+            "/localbackup/av/Roosevelt&Kennedy/20150802/2015-08-02_16-15-54.dv",
+                "/localbackup/av/Roosevelt&Kennedy/20150802/2015-08-02_16-37-32.dv"
+        ],
+        "in_time": "00:16:10.00",
+        "out_time": "00:00:04.00",
+        "presenters": "Tennessee Leeuwenburg",
+        "schedule_id": 39,
+        "title": "Sprinting For Beginners"
+    }
 
 Some people dream of eventually making this a web app.
 
