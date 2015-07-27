@@ -1,3 +1,4 @@
+celery~=3.1.18
 Flask==0.10.1
 Flask-Cors==2.0.1
 Jinja2==2.7.3

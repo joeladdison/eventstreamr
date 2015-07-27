@@ -3,12 +3,21 @@
 import os
 import signal
 import logging
+
+from celery import Celery
 from flask import Flask, request, jsonify, json, make_response
 from flask.ext.cors import CORS
 
+from encoding import encode_video
 from lib import devices, config
+from tasks import make_celery
+
 
 app = Flask(__name__, static_url_path='')
+app.config.update(
+        CELERY_BROKER_URL='amqp://encoder:3nc0d3r@10.4.4.3:5672',
+)
+celery = make_celery(app)
 
 eventstreamr_log = logging.getLogger("eventstreamr")
 eventstreamr_log.setLevel(logging.DEBUG)
@@ -134,6 +143,18 @@ def internal_settings_receive():
 def internal_settings_send():
     app.logger.info('Sent station config to manager')
     return jsonify(**state.station_config)
+
+
+@celery.task(name="api.do_encoding")
+def do_encoding(json_conf):
+    """
+    Schedule a task to encode the video as described by the JSON config str in
+    `json_conf`.
+
+    TODO: Include Youtube Uploading here as well?
+    """
+    config, talk = encode_video.setup(json_conf)
+    encode_video.process_talk(config, talk)
 
 
 if __name__ == "__main__":
