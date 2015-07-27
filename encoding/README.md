@@ -71,7 +71,7 @@ After you've finished with one talk, a json file containing the required informa
         "title": "Sprinting For Beginners"
     }
 
-Some people dream of eventually making this a web app.
+Some people dream of eventually making this a web app. Some people may have actually already made this into a web app. It'll still generate the same json, but as I understand it it will generate the same json, but will send it straight to the `encode_video.py` script instead of saving it to a file.
 
 
 video encoder

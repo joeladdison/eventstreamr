@@ -42,10 +42,10 @@ def setup(config_filename):
         schedule.link_dv_files(talk, recording_dir, DV_MATCH_WINDOW, DV_FORMAT)
     jobs = {t['schedule_id']: t for t in talks if t['playlist']}
 
-    return jobs, queue_dir
+    return jobs, queue_dir, recording_dir
 
 
-def run_interface(jobs, queue_dir):
+def run_interface(jobs, queue_dir, recording_dir):
     available_jobs = [t for t,v in jobs.items() if v['playlist']]
     if not available_jobs:
         print "No available jobs."
@@ -56,7 +56,7 @@ def run_interface(jobs, queue_dir):
     while n:
         talk = jobs[n]
 
-        dv_files = [os.path.join(dv_file['filepath'], dv_file['filename'])
+        dv_files = [os.path.join(recording_dir, dv_file['filepath'], dv_file['filename'])
                     for dv_file in talk['playlist']]
 
         with open(os.devnull, 'wb') as DEVNULL:
@@ -130,5 +130,5 @@ if __name__ == '__main__':
     else:
         config_filename = 'config.json'
         
-    jobs, queue_dir = setup(config_filename)
-    run_interface(jobs, queue_dir)
+    jobs, queue_dir, recording_dir = setup(config_filename)
+    run_interface(jobs, queue_dir, recording_dir)
