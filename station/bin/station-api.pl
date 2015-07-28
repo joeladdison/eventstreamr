@@ -42,7 +42,7 @@ options qr{.*} => sub {
 # MAC confirm, returns settings if correct
 get '/settings/:mac' => sub {
   my $data->{mac} = params->{mac};
-  if ($data->{mac} == $self->{config}{station_id}) {
+  if ($data->{mac} == $self->{config}{macaddress}) {
     $data->{config} = $self->{config};
   } else {
     status '400';
@@ -64,7 +64,7 @@ get '/settings' => sub {
 post '/settings/:mac' => sub {
   my $data->{mac} = params->{mac};
   $data->{body} = from_json(request->body);
-  if ($data->{mac} eq "$self->{config}{station_id}") {
+  if ($data->{mac} eq "$self->{config}{macaddress}") {
     my $manager = $self->{config}{manager}{pid};
     $self->{config} = $data->{body}{settings};
     $self->{config}{manager}{pid} = $manager;

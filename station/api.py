@@ -50,10 +50,10 @@ def get_settings():
     return jsonify(**state.station_config)
 
 
-@app.route("/settings/<station_id>", methods=['POST'])
-def update_settings(station_id):
+@app.route("/settings/<macaddress>", methods=['POST'])
+def update_settings(macaddress):
     global state
-    if station_id == state.station_config['station_id']:
+    if macaddress == state.station_config['macaddress']:
         manager = state.station_config['manager']['pid']
         station_config = request.get_json(silent=True)
         if station_config:

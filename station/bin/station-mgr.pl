@@ -102,7 +102,7 @@ my $commands = Config::JSON->new("$Bin/../commands.json");
 # Own data
 our $self;
 $self->{config} = $stationconfig->{config};
-$self->{config}{station_id} = getmac();
+$self->{config}{macaddress} = getmac();
 $self->{devices} = $devices->all();
 $self->{commands} = $commands->{config};
 $self->{dvswitch}{check} = 1; # check until dvswitch is found
@@ -138,7 +138,7 @@ my $log_conf = qq(
 
 Log::Log4perl::init(\$log_conf);
 our $logger = Log::Log4perl->get_logger();
-$logger->info("manager starting: pid=$$, station_id=$self->{config}->{station_id}");
+$logger->info("manager starting: pid=$$, macaddress=$self->{config}->{macaddress}");
 
 $daemons->{main}{run} = 1;
 
@@ -149,8 +149,8 @@ our $http = HTTP::Tiny->new(timeout => 15);
 api();
 
 # Register with controller
-$logger->info("Registering with controller $localconfig->{controller}/api/station/$self->{config}{station_id}");
-my $response =  $http->post("$localconfig->{controller}/api/station/$self->{config}{station_id}");
+$logger->info("Registering with controller $localconfig->{controller}/api/station/$self->{config}{macaddress}");
+my $response =  $http->post("$localconfig->{controller}/api/station/$self->{config}{macaddress}");
 
 # Controller responds with created 201, post our config
 if ($response->{status} == 201) {
@@ -355,7 +355,7 @@ sub post_config {
   # Status information
   my $status;
   $status->{status} = $self->{status};
-  $status->{station_id} = $self->{config}{station_id};
+  $status->{macaddress} = $self->{config}{macaddress};
   $status->{nickname} = $self->{config}{nickname};
   # Uncomment for heartbeat
   #$status->{heartbeat} = $self->{heartbeat};
@@ -377,8 +377,8 @@ sub post_config {
   );
 
   # Post Status to Mixer
-  $post = $http->post("http://$self->{config}{mixer}{host}:3000/status/$self->{config}{station_id}", \%post_data);
-  $logger->info("Status Posted to Mixer API -> http://$self->{config}{mixer}{host}:3000/status/$self->{config}{station_id}");
+  $post = $http->post("http://$self->{config}{mixer}{host}:3000/status/$self->{config}{macaddress}", \%post_data);
+  $logger->info("Status Posted to Mixer API -> http://$self->{config}{mixer}{host}:3000/status/$self->{config}{macaddress}");
   $logger->debug({filter => \&Data::Dumper::Dumper,
                 value  => $post}) if ($logger->is_debug());
 
@@ -404,8 +404,8 @@ sub post_config {
     );
     $logger->debug({filter => \&Data::Dumper::Dumper,
                   value  => $json}) if ($logger->is_debug());
-    $post = $http->post("$localconfig->{controller}/api/stations/$self->{config}{station_id}/partial", \%post_data);
-    $logger->info("Status Posted to Controller API - $localconfig->{controller}/api/stations/$self->{config}{station_id}/partial");
+    $post = $http->post("$localconfig->{controller}/api/stations/$self->{config}{macaddress}/partial", \%post_data);
+    $logger->info("Status Posted to Controller API - $localconfig->{controller}/api/stations/$self->{config}{macaddress}/partial");
     $logger->debug({filter => \&Data::Dumper::Dumper,
                   value  => $post}) if ($logger->is_debug());
   }
@@ -1002,7 +1002,7 @@ $VAR1 = {
                                                           }
                                             },
                         'run' => '0',
-                        'station_id' => '00:15:58:d8:85:c7',
+                        'macaddress' => '00:15:58:d8:85:c7',
                         'mixer' => {
                                      'port' => '1234',
                                      'host' => 'localhost'

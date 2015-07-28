@@ -1,7 +1,7 @@
 <div id='status'>
 <h4 class='text-center'>AV Status</h4>
 <accordion close-others='false'>
-  <accordion-group ng-repeat="(station_id,station_details) in status_list" is-open="true">
+  <accordion-group ng-repeat="(macaddress,station_details) in status_list" is-open="true">
     <accordion-heading>
     <i class="icon-{{station_details.icon}} icon-{{station_details.colour}}"></i>
     <b>{{station_details.nickname}} ({{station_details.ip}})</b>

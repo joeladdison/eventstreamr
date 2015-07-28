@@ -17,7 +17,7 @@ var station = '{ \
                  } \
               }, \
               "devices" : "all", \
-              "station_id" : "D0:FB:DB:D4:21:15", \
+              "macaddress" : "D0:FB:DB:D4:21:15", \
               "mixer" : { \
                  "host" : "localhost", \
                  "port" : "1234" \
@@ -113,7 +113,7 @@ describe('GET /api/stations/D0:FB:DB:D4:21:15', function(){
         // devices
         res.body.settings.should.have.property('devices').to.equal('all');
         // mac address
-        res.body.settings.should.have.property('station_id').to.equal('D0:FB:DB:D4:21:15');
+        res.body.settings.should.have.property('macaddress').to.equal('D0:FB:DB:D4:21:15');
         // mixer object
         res.body.settings.should.have.property('mixer').to.be.an('object');
         res.body.settings.mixer.host.should.equal('localhost');

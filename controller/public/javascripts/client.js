@@ -168,7 +168,7 @@ $.get( "/api/stations", function( data ) {
     });
   });
 
-var removeDevice = function (configuredDevices, station_id, id) {
+var removeDevice = function (configuredDevices, macaddress, id) {
   configuredDevices = ko.toJS(configuredDevices);
   // remove id from configured devices
   for (var i in configuredDevices) {
@@ -177,10 +177,10 @@ var removeDevice = function (configuredDevices, station_id, id) {
     }
   }
 
-  console.log(station_id, configuredDevices, id);
+  console.log(macaddress, configuredDevices, id);
 
   $.ajax({
-    url: "/api/stations/"+ station_id + '/partial',
+    url: "/api/stations/"+ macaddress + '/partial',
     type: 'POST',
     data: {
       key: 'settings.devices',
@@ -192,7 +192,7 @@ var removeDevice = function (configuredDevices, station_id, id) {
     });
 };
 
-var availableDeviceClick = function (item, configured, station_id) {
+var availableDeviceClick = function (item, configured, macaddress) {
   var value = ko.toJS(item);
   var devices = ko.toJS(configured) || [];
   if (devices == 'all') {
@@ -205,7 +205,7 @@ var availableDeviceClick = function (item, configured, station_id) {
   post.value = devices;
 
   $.ajax({
-    url: '/api/stations/' + station_id() + '/partial',
+    url: '/api/stations/' + macaddress() + '/partial',
     type: 'POST',
     data: post
   });
@@ -215,7 +215,7 @@ var actionStationManagers = function(roomId, action) {
   ko.utils.arrayForEach(viewModel.stations(), function(station) {
     if (station.settings.room() === roomId) {
       var post = {
-        station_id: station.settings.station_id(),
+        macaddress: station.settings.macaddress(),
         id: "Station",
         command_url: "manager",
         action: action
@@ -229,7 +229,7 @@ var actionStations = function(roomId, action) {
   ko.utils.arrayForEach(viewModel.stations(), function(station) {
     if (station.settings.room() === roomId) {
       var post = {
-        station_id: station.settings.station_id(),
+        macaddress: station.settings.macaddress(),
         id: "all",
         command_url: "command",
         action: action
@@ -239,9 +239,9 @@ var actionStations = function(roomId, action) {
   });
 };
 
-var actionStationManager = function(station_id, action) {
+var actionStationManager = function(macaddress, action) {
   var post = {
-    station_id: station_id,
+    macaddress: macaddress,
     id: "Station",
     command_url: "manager",
     action: action
@@ -251,7 +251,7 @@ var actionStationManager = function(station_id, action) {
 
 $("body").on("click", ".actionOnclick", function (e) {
   var post = {
-    station_id: $(e.currentTarget).closest("[data-station-id]").data('station-id'),
+    macaddress: $(e.currentTarget).closest("[data-macaddress]").data('macaddress'),
     id: $(e.currentTarget).data('id'),
     command_url: "command",
     action: $(e.currentTarget).data('action')
@@ -259,9 +259,9 @@ $("body").on("click", ".actionOnclick", function (e) {
   actionStationPost(post);
 });
 
-var actionDevice = function(station_id, device, action) {
+var actionDevice = function(macaddress, device, action) {
   var post = {
-    station_id: station_id,
+    macaddress: macaddress,
     id: device,
     command_url: "command",
     action: action
@@ -272,7 +272,7 @@ var actionDevice = function(station_id, device, action) {
 var actionStationPost = function(post) {
   console.log(post);
   $.ajax({
-    url: '/api/station/' + post.station_id + '/action',
+    url: '/api/station/' + post.macaddress + '/action',
     type: 'POST',
     data: post
   });
@@ -280,7 +280,7 @@ var actionStationPost = function(post) {
 
 var removeStation = function(data, event) {
   $.ajax({
-    url: "/api/station/"+ data.settings.station_id(),
+    url: "/api/station/"+ data.settings.macaddress(),
     type: 'DELETE'
   })
   .done(function(data) {
@@ -290,7 +290,7 @@ var removeStation = function(data, event) {
 
 var removeStationRoom = function(data, event) {
   $.ajax({
-    url: "/api/stations/"+ data.settings.station_id()  + '/partial',
+    url: "/api/stations/"+ data.settings.macaddress()  + '/partial',
     type: 'POST',
     data: {
       key: 'settings.room',
@@ -315,7 +315,7 @@ function submitStation(data, event) {
   });
 }
 
-var macRewrite = function(station_id) {
-  if (!station_id) { return false; }
-  return station_id.replace(/-\s*/g, ":");
+var macRewrite = function(macaddress) {
+  if (!macaddress) { return false; }
+  return macaddress.replace(/-\s*/g, ":");
 };

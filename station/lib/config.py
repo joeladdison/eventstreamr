@@ -73,8 +73,8 @@ class State(object):
         station_config = load_station_config(station_config_path)
         commands = load_commands(command_config_path)
 
-        if not station_config.get('station_id'):
-            station_config['station_id'] = get_station_id()
+        if not station_config.get('macaddress'):
+            station_config['macaddress'] = get_macaddress()
         all_devices = devices.all()
         state = cls()
         state.local_config_path = local_config_path
@@ -176,11 +176,11 @@ def load_commands(config_path):
 def register_station(state):
     logger.info(
         "Registering with controller: %s/api/station/%s",
-        state.local_config['controller'], state.station_config['station_id'])
+        state.local_config['controller'], state.station_config['macaddress'])
 
     # TODO: Post to controller
     register_url = '{0}/api/station/{1}'.format(
-        state.local_config['controller'], state.station_config['station_id'])
+        state.local_config['controller'], state.station_config['macaddress'])
     try:
         r = requests.post(register_url, headers=JSON_HEADERS)
     except requests.exceptions.ConnectionError:
@@ -246,7 +246,7 @@ def post_config(state):
 
     status = {
         'status': state.status,
-        'station_id': state.station_config['station_id'],
+        'macaddress': state.station_config['macaddress'],
         'nickname': state.station_config['nickname'],
     }
 
@@ -256,7 +256,7 @@ def post_config(state):
     # TODO: remove port
     url = 'http://{0}:3000/status/{1}'.format(
         state.station_config['mixer']['host'],
-        state.station_config['station_id'])
+        state.station_config['macaddress'])
     r = requests.post(url, data=json.dumps(status), headers=JSON_HEADERS)
     logger.info("Status posted to Mixer API -> %s", url)
     logger.debug(r.text)
@@ -270,7 +270,7 @@ def post_config(state):
 
         url = 'http://{0}/api/stations/{1}/partial'.format(
             state.local_config['controller'],
-            state.station_config['station_id'])
+            state.station_config['macaddress'])
         r = requests.post(url, data=json.dumps(data), headers=JSON_HEADERS)
         logger.info("Status posted to Controller API -> %s", url)
         logger.debug(r.text)
@@ -290,7 +290,7 @@ def write_config(config_path, config):
     logger.info("Config written to disk: %s", config_path)
 
 
-def get_station_id():
+def get_macaddress():
     """
     Get a string representation of the MAC address for the computer.
     Note: if a MAC address is not found, a random value is returned.
