@@ -76,11 +76,11 @@ our $utils = EventStreamr::Utils->new();
 
 # Load/Build Local Config
 my $localconfig;
-if (-e "$Bin/../settings.json") {
-  $localconfig = Config::JSON->new("$Bin/../settings.json");
+if (-e "$Bin/../config/settings-perl.json") {
+  $localconfig = Config::JSON->new("$Bin/../config/settings-perl.json");
   $localconfig = $localconfig->{config};
 } else {
-  $localconfig = Config::JSON->create("$Bin/../settings.json");
+  $localconfig = Config::JSON->create("$Bin/../config/settings-perl.json");
   $localconfig->{config} = blank_settings();
   $localconfig->write;
   $localconfig = $localconfig->{config};
@@ -88,16 +88,16 @@ if (-e "$Bin/../settings.json") {
 
 # Station Config
 our $stationconfig;
-if (-e "$Bin/../station.json") {
-  $stationconfig = Config::JSON->new("$Bin/../station.json");
+if (-e "$Bin/../config/station-perl.json") {
+  $stationconfig = Config::JSON->new("$Bin/../config/station-perl.json");
 } else {
-  $stationconfig = Config::JSON->create("$Bin/../station.json");
+  $stationconfig = Config::JSON->create("$Bin/../config/station-perl.json");
   $stationconfig->{config} = blank_station();
   $stationconfig->write;
 }
 
 # Commands
-my $commands = Config::JSON->new("$Bin/../commands.json");
+my $commands = Config::JSON->new("$Bin/../config/commands-perl.json");
 
 # Own data
 our $self;
