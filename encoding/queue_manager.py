@@ -8,7 +8,7 @@ import os
 import subprocess
 import sys
 
-from lib import duration, job, schedule, ui
+from lib import schedule, ui
 
 
 SCHEDULE_URL = 'http://2015.pycon-au.org/schedule/programme/json'
@@ -39,14 +39,15 @@ def setup(config_filename):
 
     # Look for DV files that match the times from the schedule
     for talk in talks:
-        schedule.link_dv_files(talk, recording_dir, DV_MATCH_WINDOW, DV_FORMAT)
+        schedule.link_dv_files(
+            talk, recording_dir, DV_MATCH_WINDOW, DV_FORMAT, True)
     jobs = {t['schedule_id']: t for t in talks if t['playlist']}
 
     return jobs, queue_dir, recording_dir
 
 
 def run_interface(jobs, queue_dir, recording_dir):
-    available_jobs = [t for t,v in jobs.items() if v['playlist']]
+    available_jobs = [t for t, v in jobs.items() if v['playlist']]
     if not available_jobs:
         print "No available jobs."
         return
@@ -89,7 +90,7 @@ def run_interface(jobs, queue_dir, recording_dir):
             end_offset = ui.prompt("End time offset [mm:ss]")
 
         # some error checking with the offsets would be nice
-        # also auto-calculating 
+        # also auto-calculating
 
         credits = ui.prompt("Credits", "")
 
@@ -111,10 +112,11 @@ def run_interface(jobs, queue_dir, recording_dir):
         todo["credits"] = credits
 
         with open(job_file, 'w') as f:
-            json.dump(todo, f, sort_keys=True, indent=4, separators=(',',': '))
+            json.dump(
+                todo, f, sort_keys=True, indent=4, separators=(',', ': '))
 
         # And start all over again!
-        available_jobs = [t for t,v in jobs.items() if v['playlist']]
+        available_jobs = [t for t, v in jobs.items() if v['playlist']]
         if not available_jobs:
             print "No available jobs."
             return
@@ -129,6 +131,6 @@ if __name__ == '__main__':
         config_filename = sys.argv[1]
     else:
         config_filename = 'config.json'
-        
+
     jobs, queue_dir, recording_dir = setup(config_filename)
     run_interface(jobs, queue_dir, recording_dir)

@@ -6,5 +6,6 @@
     "dvswitch": "dvswitch -h 0.0.0.0 -p {port}",
     "record": "dvsink-files -h {host} -p {port} {path}/{room}_%Y-%m-%d_%H-%M-%S.dv",
     "stream": "dvsink-command -h {host} -p {port} -- ffmpeg2theora - -f dv -F 25:2 --speedlevel 0 -v 4  --optimize -V 420 --soft-target -a 4 -c 1 -H 44100 --title {id} -o - | oggfwd {shost} {sport} {spassword} /{stream}",
-    "devmon": "station-devmon.pl"
+    "devmon": "{bin}/station-devmon.pl",
+    "command_proxy": "{bin}/execute_command.py {command_json_path}"
 }

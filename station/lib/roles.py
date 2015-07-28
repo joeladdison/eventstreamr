@@ -9,8 +9,12 @@ logger = logging.getLogger('eventstreamr')
 
 def devmon(state):
     control = state.device_control.setdefault('devmon', {})
-    control['command'] = config.full_command_path(
-        state, state.commands['devmon'])
+
+    params = {
+        'bin': state.local_config['dirs']['scripts'],
+    }
+    control['command'] = state.commands['devmon'].format(**params)
+
     device = {
         'role': 'devmon',
         'id': 'devmon',
@@ -273,7 +277,7 @@ def ingest_command(state, device_id, device_type):
 
     params = {
         'device': did,
-        'bin': state.local_config['script_bin'],
+        'bin': state.local_config['dirs']['scripts'],
         'host': state.station_config['mixer']['host'],
         'post': state.station_config['mixer']['post'],
     }

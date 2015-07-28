@@ -108,11 +108,22 @@ def blank_local_config():
     return {
         'controller': 'http://10.4.4.10:5001',
         'script_bin': 'bin',
-        'work_directory': '/home/av/eventstreamr',
         'supervisor': {
             "url": '',
             "sock": '',
             'ini_dir': ''
+        },
+        "dirs": {
+            "scripts": "/home/av/eventstreamr/station/bin",
+            "working": "/home/av/eventstreamr",
+            "queue": "/localbackup/queue/",
+            "recordings": "/localbackup/recordings/",
+            "output": "/localbackup/output/"
+        },
+        "schedule": "test/schedule.json",
+        "backgrounds": {
+            "title": "media/title.jpg",
+            "credits": "media/credits.jpg"
         }
     }
 
@@ -313,9 +324,11 @@ def create_process_config(state, device, command):
         json.dump(command_file, command_config)
 
     # Create supervisor command
-    process = "{0} {1}".format(
-        full_command_path(state, state.commands['process_proxy']),
-        command_file_path)
+    params = {
+        'bin': state.load_config['dirs']['scripts'],
+        'command_json_path': command_file_path,
+    }
+    process = state.commands['command_proxy'].format(**params)
 
     # Create ini file
     config = configparser.RawConfigParser()
@@ -325,7 +338,7 @@ def create_process_config(state, device, command):
     config.set(header, 'numprocs', '1')
     config.set(header, 'autorestart', 'true')
     config.set(header, 'user', state.local_config['user'])
-    config.set(header, 'directory', state.local_config['work_directory'])
+    config.set(header, 'directory', state.local_config['dirs']['working'])
     config.set(header, 'umask', '0027')
 
     # Store ini file path and process name
@@ -341,8 +354,3 @@ def create_process_config(state, device, command):
     settings['name'] = name
 
     return program_name
-
-
-def full_command_path(state, command):
-    return os.path.abspath(
-        os.path.join(state.local_config['script_bin'], command))

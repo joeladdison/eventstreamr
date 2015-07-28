@@ -4,7 +4,6 @@ import os
 import signal
 import logging
 
-from celery import Celery
 from flask import Flask, request, jsonify, json, make_response
 from flask.ext.cors import CORS
 
@@ -15,7 +14,7 @@ from tasks import make_celery
 
 app = Flask(__name__, static_url_path='')
 app.config.update(
-        CELERY_BROKER_URL='amqp://encoder:3nc0d3r@10.4.4.3:5672',
+    CELERY_BROKER_URL='amqp://encoder:3nc0d3r@10.4.4.3:5672',
 )
 celery = make_celery(app)
 
