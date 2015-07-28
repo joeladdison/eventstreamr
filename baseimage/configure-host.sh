@@ -193,6 +193,11 @@ sed -i "s/${existing}/${hostname}/g" /etc/hostname
 echo "- updating /etc/rc.local to start eventstreamr bits"
 cp $IMAGE/upstart/station-mgr.conf /etc/init/station-mgr.conf
 
+echo "- setting up supervisor"
+echo "; eventstreamr
+[include]
+files = $STATION/supervisor/*.conf" >> /etc/supervisor/supervisord.conf
+
 echo "- fix grub"
 /usr/sbin/grub-install /dev/sda
 /usr/sbin/update-grub

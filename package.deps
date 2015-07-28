@@ -20,3 +20,4 @@ perlmagick
 libdatetime-format-strptime-perl
 xvfb
 libipc-shareable-perl
+supervisor

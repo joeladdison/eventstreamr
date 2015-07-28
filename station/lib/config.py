@@ -109,9 +109,9 @@ def blank_local_config():
         'controller': 'http://10.4.4.10:5001',
         'script_bin': 'bin',
         'supervisor': {
-            "url": '',
-            "sock": '',
-            'ini_dir': ''
+            "url": 'http://127.0.0.1',
+            "sock": 'unix:///var/run/supervisor.sock',
+            'conf_dir': '/home/av/eventstreamr/station/supervisor'
         },
         "dirs": {
             "scripts": "/home/av/eventstreamr/station/bin",
@@ -120,10 +120,10 @@ def blank_local_config():
             "recordings": "/localbackup/recordings/",
             "output": "/localbackup/output/"
         },
-        "schedule": "test/schedule.json",
+        "schedule": "/home/av/eventstreamr/station/schedule.json",
         "backgrounds": {
-            "title": "media/title.jpg",
-            "credits": "media/credits.jpg"
+            "title": "/localbackup/media/title.jpg",
+            "credits": "/localbackup/media/credits.jpg"
         }
     }
 

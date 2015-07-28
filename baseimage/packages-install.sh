@@ -17,7 +17,9 @@ apt-get install -y openssh-server build-essential vlc xchat mumble melt vim libd
 
 ## Get the latest eventstreamr
 cd ~
-git clone https://github.com/linuxaustralia/eventstreamr eventstreamr
+git clone https://github.com/joeladdison/eventstreamr eventstreamr
+cd ~/eventstreamr
+git checkout pyconau-2015
 
 ## Setup ffmpeg
 mkdir -p ~/eventstreamr/baseimage/src
