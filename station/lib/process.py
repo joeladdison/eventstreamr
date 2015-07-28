@@ -1,5 +1,8 @@
-import supervisor.xmlrpc
+import logging
 import xmlrpclib
+import supervisor.xmlrpc
+
+logger = logging.getLogger('eventstreamr')
 
 
 class SupervisorProxy(object):
@@ -41,3 +44,15 @@ class SupervisorProxy(object):
 
     def stop_process(self, name, wait=True):
         return self._supervisor.stopProcess(name, wait)
+
+    def reread(self):
+        try:
+            result = self._supervisor.reloadConfig()
+        except xmlrpclib.Fault, e:
+            if e.faultCode == supervisor.xmlrpc.Faults.SHUTDOWN_STATE:
+                logger.error('ERROR: supervisor shutting down')
+            elif e.faultCode == supervisor.xmlrpc.Faults.CANT_REREAD:
+                logger.error('ERROR: %s' % e.faultString)
+            else:
+                raise
+        return result

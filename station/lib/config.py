@@ -347,6 +347,9 @@ def create_process_config(state, device, command):
     with open(ini_path, 'w') as config_file:
         config.write(config_file)
 
+    # Make supervisor aware of the new program
+    state.supervisor.reread()
+
     # Return process name
     settings = state.device_control.setdefault(device['id'], {})
     settings['supervisor_ini'] = ini_path
