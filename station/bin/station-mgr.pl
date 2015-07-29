@@ -939,7 +939,7 @@ CONFIG
 sub blank_settings {
   my $json = <<CONFIG;
 {
-     "controller" : "http://10.4.4.10:5001"
+     "controller" : "http://10.4.4.1:5001"
 }
 CONFIG
 

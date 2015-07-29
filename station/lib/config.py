@@ -105,7 +105,7 @@ def load_local_config(config_path):
 
 def blank_local_config():
     return {
-        'controller': 'http://10.4.4.10:5001',
+        'controller': 'http://10.4.4.1:5001',
         'script_bin': 'bin',
         'supervisor': {
             "url": 'http://127.0.0.1',
