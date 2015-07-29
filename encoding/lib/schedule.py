@@ -4,6 +4,12 @@ import json
 import datetime
 
 
+SCHEDULE_URL = 'http://2015.pycon-au.org/schedule/programme/json'
+JSON_FORMAT = "%Y-%m-%d %H:%M:%S"
+DV_FORMAT = "%Y-%m-%d_%H-%M-%S"
+DV_MATCH_WINDOW = datetime.timedelta(minutes=10)
+
+
 def dv_to_datetime(filename, filename_format):
     """ Return a datetime object if filename is <timestamp>.dv, else None """
     if filename[-3:] == ".dv":
@@ -66,3 +72,45 @@ def link_dv_files(talk, recording_root, dv_match_window, dv_format, all=False):
                 }
             talk['playlist'].append(dv_file)
             talk['playlist'].sort()
+
+
+def load_all_talks(config):
+    schedule_url = config.get('schedule_url', SCHEDULE_URL)
+    schedule_file = config['schedule']
+    recording_dir = config['dirs']['recordings']
+
+    if not os.path.exists(schedule_file):
+        with open(schedule_file, "w") as f:
+            f.write(urllib2.urlopen(schedule_url).read())
+
+    # Load the schedule
+    talks = get_schedule(schedule_file, JSON_FORMAT)
+
+    # Look for DV files that match the times from the schedule
+    for talk in talks:
+        link_dv_files(talk, recording_dir, DV_MATCH_WINDOW, DV_FORMAT, True)
+
+    jobs = {t['schedule_id']: t for t in talks}
+    return jobs
+
+
+def load_room_talks(config, room):
+    talks = load_all_talks(config)
+    import pprint
+    pprint.pprint(talks)
+    room_talks = {t: v for t, v in talks.items() if v['room'] == room}
+    return room_talks
+
+
+def available_rooms(config):
+    schedule_url = config.get('schedule_url', SCHEDULE_URL)
+    schedule_file = config['schedule']
+
+    if not os.path.exists(schedule_file):
+        with open(schedule_file, "w") as f:
+            f.write(urllib2.urlopen(schedule_url).read())
+
+    # read the schedule file, removing spaces in room names
+    raw = open_json(schedule_file)
+    rooms = {k.replace(" ", ""): k for k in raw}
+    return rooms

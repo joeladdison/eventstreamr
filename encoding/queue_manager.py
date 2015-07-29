@@ -9,18 +9,13 @@ import subprocess
 import sys
 
 from lib import schedule, ui
+from lib.schedule import SCHEDULE_URL, JSON_FORMAT, DV_FORMAT, DV_MATCH_WINDOW
 
-
-SCHEDULE_URL = 'http://2015.pycon-au.org/schedule/programme/json'
-JSON_FORMAT = "%Y-%m-%d %H:%M:%S"
-DV_FORMAT = "%Y-%m-%d_%H-%M-%S"
-DV_MATCH_WINDOW = datetime.timedelta(minutes=10)
 DV_FRAME_RATE = 25
 
 
-def setup(config_filename):
-    config = schedule.open_json(config_filename)
-
+def setup(config):
+    schedule_url = config.get('schedule_url', SCHEDULE_URL)
     schedule_file = config['schedule']
     recording_dir = config['dirs']['recordings']
     queue_dir = config['dirs']['queue']
@@ -32,7 +27,7 @@ def setup(config_filename):
 
     if not os.path.exists(schedule_file):
         with open(schedule_file, "w") as f:
-            f.write(urllib2.urlopen(SCHEDULE_URL).read())
+            f.write(urllib2.urlopen(schedule_url).read())
 
     # Load the schedule
     talks = schedule.get_schedule(schedule_file, JSON_FORMAT)
@@ -132,5 +127,6 @@ if __name__ == '__main__':
     else:
         config_filename = 'config.json'
 
-    jobs, queue_dir, recording_dir = setup(config_filename)
+    config = schedule.open_json(config_filename)
+    jobs, queue_dir, recording_dir = setup(config)
     run_interface(jobs, queue_dir, recording_dir)

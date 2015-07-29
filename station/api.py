@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-
+import sys
 import os
 import signal
 import logging
@@ -7,7 +7,8 @@ import logging
 from flask import Flask, request, jsonify, json, make_response
 from flask.ext.cors import CORS
 
-from encoding import encode_video
+from encoding import encode_video, queue_manager
+from encoding.lib import schedule
 from lib import devices, config
 from tasks import make_celery
 
@@ -144,6 +145,25 @@ def internal_settings_send():
     return jsonify(**state.station_config)
 
 
+# Encoding
+@app.route("/encoding/rooms")
+def available_rooms():
+    rooms = schedule.available_rooms(app.config['local_config'])
+    return jsonify(rooms=rooms)
+
+
+@app.route("/encoding/schedule")
+def full_schedule():
+    talks = schedule.load_all_talks(app.config['local_config'])
+    return jsonify(talks=talks)
+
+
+@app.route("/encoding/schedule/<room>")
+def room_schedule(room):
+    talks = schedule.load_room_talks(app.config['local_config'], room)
+    return jsonify(room=room, talks=talks)
+
+
 @celery.task(name="api.do_encoding")
 def do_encoding(json_conf):
     """
@@ -157,4 +177,11 @@ def do_encoding(json_conf):
 
 
 if __name__ == "__main__":
+    if len(sys.argv) > 1:
+        config_filename = sys.argv[1]
+    else:
+        config_filename = 'settings.json'
+
+    local_config = config.load_local_config(config_filename)
+    app.config['local_config'] = local_config
     app.run(host='0.0.0.0', port=3000, debug=True)

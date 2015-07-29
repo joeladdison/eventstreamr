@@ -95,8 +95,7 @@ def load_config(config_path, default_config):
             config = json.load(f)
     else:
         config = default_config()
-        with open(config_path, 'w') as f:
-            json.dump(config, f)
+        write_config(config_path, config)
     return config
 
 
@@ -120,6 +119,7 @@ def blank_local_config():
             "recordings": "/localbackup/recordings/",
             "output": "/localbackup/output/"
         },
+        "schedule_url": "http://2015.pycon-au.org/schedule/programme/json",
         "schedule": "/home/av/eventstreamr/station/schedule.json",
         "backgrounds": {
             "title": "/localbackup/media/title.jpg",
@@ -286,7 +286,7 @@ def get_config(state):
 
 def write_config(config_path, config):
     with open(config_path, 'w') as f:
-        json.dump(config, f)
+        json.dump(config, f, sort_keys=True, indent=4, separators=(',', ': '))
     logger.info("Config written to disk: %s", config_path)
 
 

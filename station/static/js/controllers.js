@@ -46,20 +46,66 @@ myCtrls.controller('status-list', ['$scope', '$http', '$timeout',
             }
             $scope.status_list = data;
         });
-        }
+        };
 
         $scope.refreshData = function() {
             console.log( "refreshing data" );
             $scope.getData();
             $timeout( $scope.refreshData, 1000 );
-        }
+        };
 
         $scope.resetProc = function( proc_id ) {
             var data = '{ "id": "' + proc_id + '" }';
             $http.post( api_url + '/command/restart', data );
-        }
+        };
 
         $scope.refreshData();
     }]);
 
-myCtrls.controller('example', [function() { }]);
+myCtrls.controller('encoding', function($scope, $http) {
+    var apiUrl = 'http://localhost:3000';
+
+    $scope.schedule = {
+        rooms: {},
+        room: 'Kennedy',
+        talks: {},
+        talkId: null,
+        talk: null
+    };
+
+    $scope.$watch('schedule.room', function() {
+        $scope.loadTalks();
+    }, true);
+
+    $scope.$watch('schedule.talkId', function() {
+        if ($scope.schedule.talkId !== null) {
+            $scope.schedule.talk = angular.copy($scope.schedule.talks[$scope.schedule.talkId]);
+            $scope.loadRooms();
+        }
+    }, true);
+
+    $scope.loadTalks = function() {
+        var url = apiUrl + '/encoding/schedule/' + $scope.schedule.room;
+        $http.get(url).success(function(data) {
+            if ('error' in data) {
+                // Handle error
+            } else {
+                $scope.schedule.talks = data.talks;
+            }
+        });
+    };
+
+    $scope.loadRooms = function() {
+        var url = apiUrl + '/encoding/rooms';
+        $http.get(url).success(function(data) {
+            if ('error' in data) {
+                // Handle error
+            } else {
+                $scope.schedule.rooms = data.rooms;
+            }
+        });
+    };
+
+    // Initialise
+    $scope.loadRooms();
+});

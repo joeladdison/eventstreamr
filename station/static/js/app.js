@@ -13,5 +13,6 @@ angular.module('myApp', [
 ]).
 config(['$routeProvider', function($routeProvider) {
   $routeProvider.when('/status', {templateUrl: 'partials/status.html', controller: 'status-list'});
+  $routeProvider.when('/encoding', {templateUrl: 'partials/encoding.html', controller: 'encoding'});
   $routeProvider.otherwise({redirectTo: '/status'});
 }]);

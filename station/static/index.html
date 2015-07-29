@@ -2,18 +2,26 @@
 <html lang="en" ng-app="myApp">
 <head>
   <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>AV Status</title>
   <link rel="stylesheet" href="css/bootstrap.css"/>
+  <link rel="stylesheet" href="lib/select2/select2.css" />
+  <link rel="stylesheet" href="lib/select2/select2-bootstrap.css" />
   <link rel="stylesheet" href="css/app.css"/>
 </head>
 <body>
+  <div class="container-fluid">
+    <div ng-view></div>
+  </div>
 
-  <div ng-view></div>
-
+  <script src="lib/bootstrap/jquery-min.js"></script>
   <script src="lib/angular/angular.js"></script>
+  <script src="lib/bootstrap/bootstrap.min.js"></script>
   <script src="lib/angular/angular-route.js"></script>
   <script src="lib/angular/angular-resource.js"></script>
   <script src="lib/bootstrap/ui-bootstrap-tpls-0.7.0.js"></script>
+  <script src="lib/select2.min.js"></script>
+  <script src="lib/angular-ui-select2.js"></script>
   <script src="js/app.js"></script>
   <script src="js/services.js"></script>
   <script src="js/controllers.js"></script>

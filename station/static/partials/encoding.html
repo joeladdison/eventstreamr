@@ -1,0 +1,87 @@
+<div class="row">
+  <h2 class="text-center">Encoding</h4>
+  <div class="col-md-3">
+    <h3>Available Talks</h3>
+    <div class="form">
+      <div class="form-group">
+        <label for="select-room">Select Room</label>
+        <select id="select-room" ui-select2 ng-model="schedule.room" data-placeholder="Pick a room" class="form-control">
+          <option ng-repeat="(key, value) in schedule.rooms" value="{{key}}">{{value}}</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="select-talk">Select Group</label>
+        <select id="select-talk" ui-select2 ng-model="schedule.talkId" data-placeholder="Pick a talk" class="form-control">
+          <option ng-repeat="(key, value) in schedule.talks" value="{{key}}">{{key}} - {{value['title']}}</option>
+        </select>
+      </div>
+
+      <button class="btn btn-default btn-sm" ng-click="loadRooms()">Refresh Rooms</button>
+      <button class="btn btn-default btn-sm" ng-click="loadTalks()">Refresh Talks</button>
+    </div>
+  </div>
+
+  <div class="col-md-9">
+    <h3>Talk configuration</h3>
+
+    <div class="form-horizontal" ng-show="schedule.talkId !== null">
+      <div class="form-group">
+        <label class="col-sm-2 control-label">Schedule ID</label>
+        <div class="col-sm-10">
+          <p class="form-control-static">{{schedule.talk.schedule_id}}</p>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="title" class="col-sm-2 control-label">Title</label>
+        <div class="col-sm-10">
+          <input type="text" class="form-control" id="title" placeholder="Title" ng-model="schedule.talk.title">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="presenters" class="col-sm-2 control-label">Presenters</label>
+        <div class="col-sm-10">
+          <input type="text" class="form-control" id="presenters" ng-model="schedule.talk.presenters">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="col-sm-2 control-label">Start</label>
+        <div class="col-sm-10">
+          <p class="form-control-static">{{schedule.talk.start}}</p>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="col-sm-2 control-label">End</label>
+        <div class="col-sm-10">
+          <p class="form-control-static">{{schedule.talk.end}}</p>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="col-sm-2 control-label">Abstract</label>
+        <div class="col-sm-10">
+          <p class="form-control-static">{{schedule.talk.abstract}}</p>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="col-sm-2 control-label">Playlist</label>
+        <div class="col-sm-10">
+          <div class="alert alert-danger" ng-show="schedule.talk.playlist.length == 0"><strong>No videos found</strong></div>
+          <div class="checkbox" ng-repeat="file in schedule.talk.playlist">
+            <label>
+              <input type="checkbox" value="{{file}}"> {{file}}
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <button class="btn btn-primary" ng-click="encode()" ng-disabled="schedule.talk.playlist.length == 0">Encode</button>
+      <button class="btn btn-warning" ng-click="cancel()">Cancel</button>
+    </div>
+  </div>
+</div>
