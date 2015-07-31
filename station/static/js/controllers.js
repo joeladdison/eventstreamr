@@ -6,9 +6,8 @@ var myCtrls = angular.module('myApp.controllers', []);
 
 myCtrls.controller('status-list', ['$scope', '$http', '$timeout',
     function($scope, $http, $timeout) {
-        var api_url = 'http://localhost:3000';
         $scope.getData = function() {
-        $http.get( api_url + '/status' ).success(function(data) {
+        $http.get('/status').success(function(data) {
             for ( var station in data ) {
                 var station_details = data[station];
                 station_details.icon = 'ok';
@@ -54,17 +53,15 @@ myCtrls.controller('status-list', ['$scope', '$http', '$timeout',
             $timeout( $scope.refreshData, 1000 );
         };
 
-        $scope.resetProc = function( proc_id ) {
+        $scope.resetProc = function(proc_id) {
             var data = '{ "id": "' + proc_id + '" }';
-            $http.post( api_url + '/command/restart', data );
+            $http.post('/command/restart', data);
         };
 
         $scope.refreshData();
     }]);
 
 myCtrls.controller('encoding', function($scope, $http) {
-    var apiUrl = 'http://localhost:3000';
-
     $scope.schedule = {
         rooms: {},
         room: 'Kennedy',
@@ -85,7 +82,7 @@ myCtrls.controller('encoding', function($scope, $http) {
     }, true);
 
     $scope.loadTalks = function() {
-        var url = apiUrl + '/encoding/schedule/' + $scope.schedule.room;
+        var url = '/encoding/schedule/' + $scope.schedule.room;
         $http.get(url).success(function(data) {
             if ('error' in data) {
                 // Handle error
@@ -96,7 +93,7 @@ myCtrls.controller('encoding', function($scope, $http) {
     };
 
     $scope.loadRooms = function() {
-        var url = apiUrl + '/encoding/rooms';
+        var url = '/encoding/rooms';
         $http.get(url).success(function(data) {
             if ('error' in data) {
                 // Handle error
