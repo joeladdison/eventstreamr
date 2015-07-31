@@ -5,7 +5,7 @@ import datetime
 
 
 SCHEDULE_URL = 'http://2015.pycon-au.org/schedule/programme/json'
-JSON_FORMAT = "%Y-%m-%d %H:%M:%S"
+JSON_DATE_FORMAT = "%Y-%m-%d %H:%M:%S"
 DV_FORMAT = "%Y-%m-%d_%H-%M-%S"
 DV_MATCH_WINDOW = datetime.timedelta(minutes=10)
 
@@ -32,10 +32,19 @@ def open_json(filename):
     return data
 
 
-def get_schedule(schedule_file, json_format):
-    # read the schedule file, removing spaces in room names
-    raw = open_json(schedule_file)
-    schedule_data = {k.replace(" ", ""): v for k, v in raw.items()}
+def load_schedule(schedule_file, schedule_url):
+    if not os.path.exists(schedule_file):
+        # Download from url
+        with open(schedule_file, "w") as f:
+            f.write(urllib2.urlopen(schedule_url).read())
+
+    with open(schedule_file, "r") as f:
+        return json.load(f)
+
+
+def get_schedule(schedule, json_date_format=JSON_DATE_FORMAT):
+    # Read the schedule, removing spaces in room names
+    schedule_data = {k.replace(" ", ""): v for k, v in schedule.items()}
     fields = ["schedule_id", "presenters", "title", "abstract", "start", "end"]
     talks = []
     for schedule_room, schedule_room_data in schedule_data.iteritems():
@@ -49,9 +58,9 @@ def get_schedule(schedule_file, json_format):
             talk = {field: schedule_talk[field] for field in copyfields}
             talk['room'] = schedule_room
             talk['start'] = datetime.datetime.strptime(
-                schedule_talk['start'], json_format)
+                schedule_talk['start'], json_date_format)
             talk['end'] = datetime.datetime.strptime(
-                schedule_talk['end'], json_format)
+                schedule_talk['end'], json_date_format)
             talk['date'] = talk['start'].strftime("%Y%m%d")
             talks.append(talk)
     return talks
@@ -70,47 +79,28 @@ def link_dv_files(talk, recording_root, dv_match_window, dv_format, all=False):
                     'filename': filename,
                     'filepath': os.path.join(talk['room'], talk['date'])
                 }
-            talk['playlist'].append(dv_file)
+                talk['playlist'].append(dv_file)
             talk['playlist'].sort()
 
 
-def load_all_talks(config):
-    schedule_url = config.get('schedule_url', SCHEDULE_URL)
-    schedule_file = config['schedule']
-    recording_dir = config['dirs']['recordings']
-
-    if not os.path.exists(schedule_file):
-        with open(schedule_file, "w") as f:
-            f.write(urllib2.urlopen(schedule_url).read())
-
+def load_all_talks(schedule, recording_dir):
     # Load the schedule
-    talks = get_schedule(schedule_file, JSON_FORMAT)
+    talks = get_schedule(schedule, JSON_DATE_FORMAT)
 
     # Look for DV files that match the times from the schedule
     for talk in talks:
-        link_dv_files(talk, recording_dir, DV_MATCH_WINDOW, DV_FORMAT, True)
+        link_dv_files(talk, recording_dir, DV_MATCH_WINDOW, DV_FORMAT, False)
 
     jobs = {t['schedule_id']: t for t in talks}
     return jobs
 
 
-def load_room_talks(config, room):
-    talks = load_all_talks(config)
-    import pprint
-    pprint.pprint(talks)
+def load_room_talks(schedule, recording_dir, room):
+    talks = load_all_talks(schedule, recording_dir)
     room_talks = {t: v for t, v in talks.items() if v['room'] == room}
     return room_talks
 
 
-def available_rooms(config):
-    schedule_url = config.get('schedule_url', SCHEDULE_URL)
-    schedule_file = config['schedule']
-
-    if not os.path.exists(schedule_file):
-        with open(schedule_file, "w") as f:
-            f.write(urllib2.urlopen(schedule_url).read())
-
-    # read the schedule file, removing spaces in room names
-    raw = open_json(schedule_file)
-    rooms = {k.replace(" ", ""): k for k in raw}
-    return rooms
+def available_rooms(schedule):
+    # Read the schedule, removing spaces in room names
+    return {k.replace(" ", ""): k for k in schedule}

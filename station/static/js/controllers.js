@@ -67,7 +67,8 @@ myCtrls.controller('encoding', function($scope, $http) {
         room: 'Kennedy',
         talks: {},
         talkId: null,
-        talk: null
+        talk: null,
+        talkStatus: null,
     };
 
     $scope.$watch('schedule.room', function() {
@@ -76,8 +77,18 @@ myCtrls.controller('encoding', function($scope, $http) {
 
     $scope.$watch('schedule.talkId', function() {
         if ($scope.schedule.talkId !== null) {
-            $scope.schedule.talk = angular.copy($scope.schedule.talks[$scope.schedule.talkId]);
-            $scope.loadRooms();
+            var talk = angular.copy($scope.schedule.talks[$scope.schedule.talkId]);
+            // Add selected flag to files for checkboxes
+            var fileList = talk.playlist;
+            for (var i = 0; i < fileList.length; ++i) {
+                fileList[i].selected = false;
+            }
+            talk.credits = '';
+            talk.startTime = '00:00';
+            talk.endTime = '00:00';
+
+            $scope.schedule.talk = talk;
+            $scope.schedule.talkStatus = null;
         }
     }, true);
 
@@ -100,6 +111,38 @@ myCtrls.controller('encoding', function($scope, $http) {
             } else {
                 $scope.schedule.rooms = data.rooms;
             }
+        });
+    };
+
+    $scope.encode = function() {
+        var url = '/encoding/submit';
+
+        // Build list of files
+        var files = [];
+        for (var i = 0; i < $scope.schedule.talk.playlist.length; ++i) {
+            var file = $scope.schedule.talk.playlist[i];
+            if (file.selected === true) {
+                var cleanFile = {
+                    filename: file.filename,
+                    filepath: file.filepath
+                };
+                files.push(cleanFile);
+            }
+        }
+
+        var talkData = $scope.schedule.talk;
+        var talk = {
+            schedule_id: talkData.schedule_id,
+            title: talkData.title,
+            presenters: talkData.presenters,
+            file_list: files,
+            in_time: "00:" + talkData.startTime + ".00",
+            out_time: "00:" + talkData.endTime + ".00",
+            credits: talkData.credits
+        };
+
+        $http.post(url, talk).success(function(data) {
+            $scope.schedule.talkStatus = data.result;
         });
     };
 

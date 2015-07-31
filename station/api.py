@@ -7,7 +7,7 @@ import logging
 from flask import Flask, request, jsonify, json, make_response
 from flask.ext.cors import CORS
 
-from encoding import encode_video, queue_manager
+from encoding import encode_video
 from encoding.lib import schedule
 from lib import devices, config
 from tasks import make_celery
@@ -148,20 +148,73 @@ def internal_settings_send():
 # Encoding
 @app.route("/encoding/rooms")
 def available_rooms():
-    rooms = schedule.available_rooms(app.config['local_config'])
+    # Load the schedule
+    schedule_file = app.config['local_config']['schedule']
+    schedule_url = app.config['local_config']['schedule_url']
+    loaded_schedule = schedule.load_schedule(schedule_file, schedule_url)
+
+    # Load the rooms
+    rooms = schedule.available_rooms(loaded_schedule)
     return jsonify(rooms=rooms)
 
 
 @app.route("/encoding/schedule")
 def full_schedule():
-    talks = schedule.load_all_talks(app.config['local_config'])
+    # Load the schedule
+    schedule_file = app.config['local_config']['schedule']
+    schedule_url = app.config['local_config']['schedule_url']
+    loaded_schedule = schedule.load_schedule(schedule_file, schedule_url)
+
+    # Use remote recording directory to give greater chance of file existance
+    recording_dir = app.config['local_config']['dirs']['remote_recordings']
+
+    # Load all talks
+    talks = schedule.load_all_talks(loaded_schedule, recording_dir)
     return jsonify(talks=talks)
 
 
 @app.route("/encoding/schedule/<room>")
 def room_schedule(room):
-    talks = schedule.load_room_talks(app.config['local_config'], room)
+    # Load the schedule
+    schedule_file = app.config['local_config']['schedule']
+    schedule_url = app.config['local_config']['schedule_url']
+    loaded_schedule = schedule.load_schedule(schedule_file, schedule_url)
+
+    # Use remote recording directory to give greater chance of file existance
+    recording_dir = app.config['local_config']['dirs']['remote_recordings']
+
+    # Load talks for the room
+    talks = schedule.load_room_talks(loaded_schedule, recording_dir, room)
     return jsonify(room=room, talks=talks)
+
+
+@app.route('/encoding/submit', methods=['POST'])
+def submit_encoding_task():
+    talk = request.get_json(silent=True)
+
+    # Ensure queue folder exists
+    queue_dir = app.config['local_config']['dirs']['queue']
+    try:
+        os.makedirs(queue_dir)
+    except OSError:
+        pass
+
+    # Save job to queue
+    job_file = os.path.join(queue_dir, str(talk['schedule_id'])) + '.json'
+    with open(job_file, 'w') as f:
+            json.dump(
+                talk, f, sort_keys=True, indent=4, separators=(',', ': '))
+
+    # Create celery task
+    if app.config['local_config']['use_celery']:
+        json_data = json.dumps(talk)
+        do_encoding.delay(json_data)
+
+    # TODO: Actually ensure we were successful
+    success_msg = 'Encoding job for {0} submitted successfully'.format(
+        talk['schedule_id'])
+
+    return jsonify(result=success_msg)
 
 
 @celery.task(name="api.do_encoding")
@@ -172,8 +225,8 @@ def do_encoding(json_conf):
 
     TODO: Include Youtube Uploading here as well?
     """
-    config, talk = encode_video.setup(json_conf)
-    encode_video.process_talk(config, talk)
+    config, talk = encode_video.setup(app.config['local_config'], json_conf)
+    encode_video.process_remote_talk(config, talk)
 
 
 if __name__ == "__main__":
@@ -184,4 +237,4 @@ if __name__ == "__main__":
 
     local_config = config.load_local_config(config_filename)
     app.config['local_config'] = local_config
-    app.run(host='0.0.0.0', port=3000, debug=True)
+    app.run(host='0.0.0.0', port=5000, debug=True)

@@ -1,16 +1,17 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-import subprocess
 import os
 import fnmatch
 import time
+import json
 
-from lib.schedule import *
+from lib import schedule
 from lib.youtube import *
 
 config_file = 'config.json'
-config_data = open_json(config_file)
+with open(config_file, 'r') as f:
+    config_data = json.load(f)
 
 base_dir = config_data['base_dir']
 queue_todo_dir = os.path.join(base_dir, 'completed')
@@ -18,15 +19,17 @@ queue_wip_dir = os.path.join(base_dir, 'uploading')
 queue_done_dir = os.path.join(base_dir, 'uploaded')
 youtube_log_file = os.path.join(base_dir, 'youtube_uploads.log')
 schedule_file = os.path.join(base_dir, config_data['schedule'])
-json_format="%Y-%m-%d %H:%M:%S"
 
 client_id = ''
 client_secret = ''
 category_id = 28
 youtube = get_authenticated_youtube_service('youtube_upload.json', client_id, client_secret)
 
-schedule = get_schedule(schedule_file, json_format)
-schedule = { t['schedule_id']: t for t in schedule  }
+loaded_schedule = schedule.load_schedule(schedule_file, schedule.SCHEDULE_URL)
+
+talks = schedule.get_schedule(loaded_schedule, schedule.JSON_DATE_FORMAT)
+talks = {t['schedule_id']: t for t in talks}
+
 
 def move_job(src_dir, dst_dir, jobname):
     files = os.listdir(src_dir)
@@ -37,6 +40,7 @@ def move_job(src_dir, dst_dir, jobname):
             if not os.path.exists(dst_dir):
                 os.makedirs(dst_dir)
             os.rename(src, dst)
+
 
 while True:
     files = os.listdir(queue_todo_dir)
@@ -49,8 +53,8 @@ while True:
             upload_file = os.path.join(queue_wip_dir, filename)
             upload_video_info = {
                 'snippet': {
-                    'title': schedule[int(job)]['title'],
-                    'description': schedule[int(job)]['abstract'] + ' by ' + schedule[int(job)]['presenters'],
+                    'title': talks[int(job)]['title'],
+                    'description': talks[int(job)]['abstract'] + ' by ' + talks[int(job)]['presenters'],
                     'categoryId': category_id
                 },
                 'status': {

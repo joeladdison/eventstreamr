@@ -115,16 +115,19 @@ def blank_local_config():
         "dirs": {
             "scripts": "/home/av/eventstreamr/station/bin",
             "working": "/home/av/eventstreamr",
-            "queue": "/localbackup/queue/",
+            "queue": "/srv/av/2015/queue/",
             "recordings": "/localbackup/recordings/",
-            "output": "/localbackup/output/"
+            "output": "/localbackup/output/",
+            "remote_recordings": "/srv/av/2015/recordings",
+            "remote_output": "/srv/av/2015/output",
         },
         "schedule_url": "http://2015.pycon-au.org/schedule/programme/json",
         "schedule": "/home/av/eventstreamr/station/schedule.json",
         "backgrounds": {
             "title": "/localbackup/media/title.jpg",
             "credits": "/localbackup/media/credits.jpg"
-        }
+        },
+        "use_celery": True,
     }
 
 

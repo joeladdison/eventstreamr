@@ -9,7 +9,7 @@ import subprocess
 import sys
 
 from lib import schedule, ui
-from lib.schedule import SCHEDULE_URL, JSON_FORMAT, DV_FORMAT, DV_MATCH_WINDOW
+from lib.schedule import SCHEDULE_URL, JSON_DATE_FORMAT, DV_FORMAT, DV_MATCH_WINDOW
 
 DV_FRAME_RATE = 25
 
@@ -25,12 +25,11 @@ def setup(config):
     except OSError:
         pass
 
-    if not os.path.exists(schedule_file):
-        with open(schedule_file, "w") as f:
-            f.write(urllib2.urlopen(schedule_url).read())
-
     # Load the schedule
-    talks = schedule.get_schedule(schedule_file, JSON_FORMAT)
+    loaded_schedule = schedule.load_schedule(schedule_file, schedule_url)
+
+    # Load the talks
+    talks = schedule.get_schedule(loaded_schedule, JSON_DATE_FORMAT)
 
     # Look for DV files that match the times from the schedule
     for talk in talks:
