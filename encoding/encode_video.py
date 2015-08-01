@@ -67,7 +67,12 @@ def create_text_overlay_clip(background_filename, text, duration):
         with open(filename, 'w') as f:
             f.write(text)
 
-        text_clip = mpy.TextClip(filename=filename, font="FreeSans", fontsize=40, color='white', print_cmd=True)
+        text_clip = mpy.TextClip(
+            filename=filename,
+            font="FreeSans",
+            fontsize=40,
+            color='white',
+            print_cmd=True)
         text_clip = text_clip.set_pos(('center', 30))
         text_clip = text_clip.set_duration(duration)
         clips.append(text_clip)
@@ -92,8 +97,9 @@ def create_talk_clip(files=(), start=0, end=None):
     print("Setting up main talk")
     clip_list = []
 
+    last_clip = mpy.VideoFileClip(files.pop())
+
     if end and end >= 0:
-        last_clip = mpy.VideoFileClip(files.pop())
         last_clip = last_clip.subclip(0, end)
 
     for dv in files:
@@ -103,7 +109,8 @@ def create_talk_clip(files=(), start=0, end=None):
     clip_list.append(last_clip)
 
     full_clip = mpy.concatenate(clip_list)
-    full_clip = full_clip.subclip(start)
+    if start and start > 0:
+        full_clip = full_clip.subclip(start)
     return full_clip
 
 
@@ -112,7 +119,8 @@ def encode_file(video, base_filename, extension):
     print('Creating video: {0}'.format(filename))
 
     if extension in ('mp4', 'ogv'):
-        video.write_videofile(filename, preset='fast', ffmpeg_params=['-aspect', '16:9'])
+        video.write_videofile(
+            filename, preset='fast', ffmpeg_params=['-aspect', '16:9'])
         return filename
     elif extension in ('ogg'):
         video.audio.to_audiofile(filename)

@@ -90,8 +90,8 @@ myCtrls.controller('encoding', function($scope, $http) {
                 fileList[i].selected = false;
             }
             talk.credits = '';
-            talk.startTime = '00:00';
-            talk.endTime = '00:00';
+            talk.startTime = '';
+            talk.endTime = '';
 
             $scope.schedule.talk = talk;
             $scope.schedule.talkStatus = null;
@@ -137,13 +137,24 @@ myCtrls.controller('encoding', function($scope, $http) {
         }
 
         var talkData = $scope.schedule.talk;
+
+        var inTime = '';
+        if (talkData.startTime !== '') {
+            inTime = "00:" + talkData.startTime + ".00";
+        }
+
+        var outTime = '';
+        if (talkData.endTime !== '') {
+            outTime = "00:" + talkData.endTime + ".00";
+        }
+
         var talk = {
             schedule_id: talkData.schedule_id,
             title: talkData.title,
             presenters: talkData.presenters,
             file_list: files,
-            in_time: "00:" + talkData.startTime + ".00",
-            out_time: "00:" + talkData.endTime + ".00",
+            in_time: inTime,
+            out_time: outTime,
             credits: talkData.credits
         };
 
