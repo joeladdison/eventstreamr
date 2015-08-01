@@ -134,8 +134,8 @@ def process_talk(config, talk):
 
     # Create intro (title) slide
     print('[{0}] Creating intro (title) slide'.format(talk_id))
-    title = talk['title']
-    presenters = talk['presenters']
+    title = talk.get('title', '')
+    presenters = talk.get('presenters', '')
     title_bg = config['backgrounds']['title']
     title_clip = create_title_clip(
         background_filename=title_bg,
@@ -164,7 +164,6 @@ def process_talk(config, talk):
     # Merge all clips together and encode
     print('[{0}] Merging clips'.format(talk_id))
     video = mpy.concatenate([title_clip, talk_clip, credits_clip])
-    print("VIDEO SIZE:", video.size, video.w, video.h)
     if config.get('output_filename', ''):
         filename = config['output_filename'].format(**talk)
     else:
