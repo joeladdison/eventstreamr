@@ -47,16 +47,22 @@ myCtrls.controller('status-list', ['$scope', '$http', '$timeout',
         });
         };
 
+        var refreshTimeout = null;
         $scope.refreshData = function() {
             console.log( "refreshing data" );
             $scope.getData();
-            $timeout( $scope.refreshData, 1000 );
+            refreshTimeout = $timeout( $scope.refreshData, 1000 );
         };
 
         $scope.resetProc = function(proc_id) {
             var data = '{ "id": "' + proc_id + '" }';
             $http.post('/command/restart', data);
         };
+
+        $scope.$on('$locationChangeStart', function(){
+            if (refreshTimeout !== null)
+                $timeout.cancel(refreshTimeout);
+        });
 
         $scope.refreshData();
     }]);

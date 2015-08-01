@@ -127,6 +127,8 @@ def blank_local_config():
             "title": "/localbackup/media/title.jpg",
             "credits": "/localbackup/media/credits.jpg"
         },
+        "output_filename": "{schedule_id}",
+        "output_extensions": ['mp4'],
         "use_celery": True,
     }
 

@@ -12,6 +12,7 @@ from encoding.lib import schedule
 from lib import devices, config
 from tasks import make_celery
 
+from celery.utils.log import get_task_logger
 
 app = Flask(__name__, static_url_path='')
 app.config.update(
@@ -205,10 +206,13 @@ def submit_encoding_task():
             json.dump(
                 talk, f, sort_keys=True, indent=4, separators=(',', ': '))
 
+    app.logger.info('Submitted job to queue: {0}'.format(talk['schedule_id']))
+
     # Create celery task
     if app.config['local_config']['use_celery']:
         json_data = json.dumps(talk)
-        do_encoding.delay(json_data)
+        do_encoding.delay(json.dumps(app.config['local_config']), json_data)
+        app.logger.info('Submitted job to celery: {0}'.format(talk['schedule_id']))
 
     # TODO: Actually ensure we were successful
     success_msg = 'Encoding job for {0} submitted successfully'.format(
@@ -218,15 +222,21 @@ def submit_encoding_task():
 
 
 @celery.task(name="api.do_encoding")
-def do_encoding(json_conf):
+def do_encoding(config_json, talk_json):
     """
     Schedule a task to encode the video as described by the JSON config str in
     `json_conf`.
 
     TODO: Include Youtube Uploading here as well?
     """
-    config, talk = encode_video.setup(app.config['local_config'], json_conf)
+    logger = get_task_logger(__name__)
+    local_config = json.loads(config_json)
+    talk_job = json.loads(talk_json)
+    logger.info('Received job: {0}'.format(talk_job['schedule_id']))
+    config, talk = encode_video.setup(local_config, talk_json)
+    logger.info('Starting encoding: {0}'.format(talk_job['schedule_id']))
     encode_video.process_remote_talk(config, talk)
+    logger.info('Finished encoding: {0}'.format(talk_job['schedule_id']))
 
 
 if __name__ == "__main__":
