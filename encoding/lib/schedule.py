@@ -44,7 +44,7 @@ def load_schedule(schedule_file, schedule_url):
 
 def get_schedule(schedule, json_date_format=JSON_DATE_FORMAT):
     # Read the schedule, removing spaces in room names
-    schedule_data = {k.replace(" ", ""): v for k, v in schedule.items()}
+    schedule_data = {k.replace(" ", "").lower(): v for k, v in schedule.items()}
     fields = ["schedule_id", "presenters", "title", "abstract", "start", "end"]
     talks = []
     for schedule_room, schedule_room_data in schedule_data.iteritems():
@@ -56,7 +56,7 @@ def get_schedule(schedule, json_date_format=JSON_DATE_FORMAT):
                 copyfields.remove("presenters")
 
             talk = {field: schedule_talk[field] for field in copyfields}
-            talk['room'] = schedule_room
+            talk['room'] = schedule_room.lower()
             talk['start'] = datetime.datetime.strptime(
                 schedule_talk['start'], json_date_format)
             talk['end'] = datetime.datetime.strptime(
@@ -68,7 +68,8 @@ def get_schedule(schedule, json_date_format=JSON_DATE_FORMAT):
 
 def link_dv_files(talk, recording_root, dv_match_window, dv_format, all=False):
     talk['playlist'] = []
-    talk_path = os.path.join(recording_root, talk['room'], talk['date'])
+    room = talk['room'].lower()
+    talk_path = os.path.join(recording_root, room, talk['date'])
     if os.path.exists(talk_path):
         for filename in os.listdir(talk_path):
             time = dv_to_datetime(filename, dv_format)
@@ -103,4 +104,4 @@ def load_room_talks(schedule, recording_dir, room):
 
 def available_rooms(schedule):
     # Read the schedule, removing spaces in room names
-    return {k.replace(" ", ""): k for k in schedule}
+    return {k.replace(" ", "").lower(): k for k in schedule}

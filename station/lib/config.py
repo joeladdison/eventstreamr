@@ -124,9 +124,11 @@ def blank_local_config():
         "schedule_url": "http://2015.pycon-au.org/schedule/programme/json",
         "schedule": "/home/av/eventstreamr/station/schedule.json",
         "backgrounds": {
-            "title": "/localbackup/media/title.jpg",
-            "credits": "/localbackup/media/credits.jpg"
+            "title": "/srv/av/2015/media/pyconau2015_titleslide720x576.png",
+            "credits": "/srv/av/2015/media/pyconau2015_titleslide720x576.png"
         },
+        "output_filename": "{schedule_id}",
+        "output_extensions": ['mp4'],
         "use_celery": True,
     }
 
