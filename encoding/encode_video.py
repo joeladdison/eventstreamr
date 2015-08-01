@@ -114,7 +114,7 @@ def encode_file(video, base_filename, extension):
     print('Creating video: {0}'.format(filename))
 
     if extension in ('mp4', 'ogv'):
-        video.write_videofile(filename, preset='medium', ffmpeg_params=['-aspect', '16:9'])  #, '-qp', '0', '-crf', '0'])
+        video.write_videofile(filename, preset='fast', ffmpeg_params=['-aspect', '16:9'])  #, '-qp', '0', '-crf', '0'])
         return filename
     elif extension in ('ogg'):
         video.audio.to_audiofile(filename)
