@@ -10,11 +10,11 @@ import shutil
 import moviepy.editor as mpy
 
 
-BASE_CONFIG_FILENAME = 'config.json'
+BASE_CONFIG_FILENAME = 'settings.json'
 
 
-def load_config():
-    with open(BASE_CONFIG_FILENAME, 'r') as f:
+def load_config(filename=BASE_CONFIG_FILENAME):
+    with open(filename, 'r') as f:
         try:
             base_config = json.load(f)
         except Exception as e:  # dunno
@@ -105,7 +105,6 @@ def create_talk_clip(files=(), start=0, end=None):
 
     full_clip = mpy.concatenate(clip_list)
     full_clip = full_clip.subclip(start)
-    #full_clip.fps = 24
     return full_clip
 
 
@@ -114,7 +113,7 @@ def encode_file(video, base_filename, extension):
     print('Creating video: {0}'.format(filename))
 
     if extension in ('mp4', 'ogv'):
-        video.write_videofile(filename, preset='fast', ffmpeg_params=['-aspect', '16:9'])  #, '-qp', '0', '-crf', '0'])
+        video.write_videofile(filename, preset='fast', ffmpeg_params=['-aspect', '16:9'])
         return filename
     elif extension in ('ogg'):
         video.audio.to_audiofile(filename)
@@ -125,7 +124,7 @@ def encode_file(video, base_filename, extension):
 
 def process_talk(config, talk):
     talk_id = talk['schedule_id']
-    
+
     # Create intro (title) slide
     print('[{0}] Creating intro (title) slide'.format(talk_id))
     title = talk['title']
@@ -235,18 +234,19 @@ def process_remote_talk(config, talk):
 
 if __name__ == '__main__':
 
-    parser = argparse.ArgumentParser(description="Encode some videos.")
-    parser.add_argument("-s", "--string", help="talk config as a json string")
+    # parser = argparse.ArgumentParser(description="Encode some videos.")
+    # parser.add_argument("-s", "--string", help="talk config as a json string")
     # parser.add_argument("-f", "--file", help="talk config as a json file")
-    args = parser.parse_args()
+    # args = parser.parse_args()
 
-    if len(sys.argv) > 1:
-        talk_config_json = args.string
-    else:
-        print "Usage: enter a json string describing a talk from the todo queue"
+    if not len(sys.argv) == 2:
+        print "Usage: talk_job.json settings.json"
         sys.exit(1)
 
-    config, talk = setup(None, talk_config_json)
+    talk_config = load_talk_config(sys.argv[0])
+    local_config = load_config(sys.argv[1])
+
+    config, talk = setup(local_config, talk_config)
     if config is None or talk is None:
         sys.exit(1)
-    process_talk(config, talk)
+    process_remote_talk(config, talk)
