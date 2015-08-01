@@ -233,7 +233,7 @@ def do_encoding(config_json, talk_json):
     local_config = json.loads(config_json)
     talk_job = json.loads(talk_json)
     logger.info('Received job: {0}'.format(talk_job['schedule_id']))
-    config, talk = encode_video.setup(local_config, talk_json)
+    config, talk = encode_video.setup(local_config, talk_job)
     logger.info('Starting encoding: {0}'.format(talk_job['schedule_id']))
     encode_video.process_remote_talk(config, talk)
     logger.info('Finished encoding: {0}'.format(talk_job['schedule_id']))

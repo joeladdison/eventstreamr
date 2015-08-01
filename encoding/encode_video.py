@@ -25,11 +25,12 @@ def load_config(filename=BASE_CONFIG_FILENAME):
     return base_config
 
 
-def load_talk_config(talk_config_json):
+def load_talk_config(talk_config_file):
     talk_config = None
 
     try:
-        talk_config = json.loads(talk_config_json)
+        with open(talk_config_file, 'r') as f:
+            talk_config = json.load(f)
     except Exception as e:  # dunno
         print "Error loading talk config:"
         print e
@@ -37,11 +38,9 @@ def load_talk_config(talk_config_json):
     return talk_config
 
 
-def setup(base_config, talk_config_json):
+def setup(base_config, talk_config):
     if base_config is None:
         base_config = load_config()
-
-    talk_config = load_talk_config(talk_config_json)
 
     try:
         os.makedirs(os.path.join(base_config['dirs']['output']))
@@ -239,12 +238,12 @@ if __name__ == '__main__':
     # parser.add_argument("-f", "--file", help="talk config as a json file")
     # args = parser.parse_args()
 
-    if not len(sys.argv) == 2:
-        print "Usage: talk_job.json settings.json"
+    if not len(sys.argv) == 3:
+        print "Usage: ./encode_video talk_job.json settings.json"
         sys.exit(1)
 
-    talk_config = load_talk_config(sys.argv[0])
-    local_config = load_config(sys.argv[1])
+    talk_config = load_talk_config(sys.argv[1])
+    local_config = load_config(sys.argv[2])
 
     config, talk = setup(local_config, talk_config)
     if config is None or talk is None:
