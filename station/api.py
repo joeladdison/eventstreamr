@@ -18,6 +18,7 @@ from celery.utils.log import get_task_logger
 app = Flask(__name__, static_url_path='')
 app.config.update(
     CELERY_BROKER_URL='amqp://encoder:3nc0d3r@10.4.4.3:5672',
+    CELERYD_PREFETCH_MULTIPLIER=1,
 )
 
 # Load config
