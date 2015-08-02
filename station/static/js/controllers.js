@@ -75,6 +75,7 @@ myCtrls.controller('encoding', function($scope, $http) {
         talkId: null,
         talk: null,
         talkStatus: null,
+        queue: []
     };
 
     $scope.$watch('schedule.room', function() {
@@ -120,6 +121,17 @@ myCtrls.controller('encoding', function($scope, $http) {
         });
     };
 
+    $scope.loadQueue = function() {
+        var url = '/encoding/queue';
+        $http.get(url).success(function(data) {
+            if ('error' in data) {
+                // Handle error
+            } else {
+                $scope.schedule.queue = data.queue;
+            }
+        });
+    };
+
     $scope.encode = function() {
         var url = '/encoding/submit';
 
@@ -155,7 +167,8 @@ myCtrls.controller('encoding', function($scope, $http) {
             file_list: files,
             in_time: inTime,
             out_time: outTime,
-            credits: talkData.credits
+            credits: talkData.credits,
+            alerts: []
         };
 
         $http.post(url, talk).success(function(data) {
@@ -163,6 +176,18 @@ myCtrls.controller('encoding', function($scope, $http) {
         });
     };
 
+    $scope.resubmitEncode = function(id) {
+        var url = '/encoding/resubmit/' + id;
+
+        $http.get(url).success(function(data) {
+            if ('alerts' in data) {
+                console.log(data.alerts)
+                $scope.schedule.alerts = data.alerts;
+            }
+        });
+    };
+
     // Initialise
     $scope.loadRooms();
+    $scope.loadQueue();
 });

@@ -2,6 +2,7 @@
 import os
 import signal
 import logging
+import fnmatch
 
 from flask import Flask, request, jsonify, json, make_response
 from flask.ext.cors import CORS
@@ -224,6 +225,44 @@ def submit_encoding_task():
     success_msg = 'Encoding job for {0} submitted successfully'.format(talk_id)
 
     return jsonify(result=success_msg)
+
+
+@app.route('/encoding/resubmit/<talk_id>')
+def resubmit_encoding_task(talk_id):
+    success_msg = {
+        'msg': 'Encoding job for {0} submitted successfully'.format(talk_id),
+        'type': 'success',
+    }
+    error_msg = {
+        'msg': 'Encoding job for {0} could not be submitted'.format(talk_id),
+        'type': 'error',
+    }
+
+    alerts = []
+    # Create celery task
+    if app.config['local_config']['use_celery']:
+        job_file = '{0}.json'.format(talk_id)
+        do_encoding.delay(job_file)
+        app.logger.info('Submitted job to celery: {0}'.format(talk_id))
+        alerts.append(success_msg)
+    else:
+        alerts.append(error_msg)
+
+    return jsonify(alerts=alerts)
+
+
+@app.route('/encoding/queue')
+def encoding_queue():
+    # Ensure queue folder exists
+    queue_dir = app.config['local_config']['dirs']['queue']
+    try:
+        os.makedirs(queue_dir)
+    except OSError:
+        pass
+
+    jobs = [f[:-5] for f in
+            fnmatch.filter(os.listdir(queue_dir), '*.json')]
+    return jsonify(queue=jobs)
 
 
 @celery.task(name="api.do_encoding")
