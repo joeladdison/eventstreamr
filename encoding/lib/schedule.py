@@ -7,7 +7,7 @@ import datetime
 SCHEDULE_URL = 'http://2015.pycon-au.org/schedule/programme/json'
 JSON_DATE_FORMAT = "%Y-%m-%d %H:%M:%S"
 DV_FORMAT = "%Y-%m-%d_%H-%M-%S"
-DV_MATCH_WINDOW = datetime.timedelta(minutes=10)
+DV_MATCH_WINDOW = datetime.timedelta(minutes=25)
 
 
 def dv_to_datetime(filename, filename_format):

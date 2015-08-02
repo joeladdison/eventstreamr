@@ -10,11 +10,11 @@ import shutil
 import moviepy.editor as mpy
 
 
-BASE_CONFIG_FILENAME = 'config.json'
+BASE_CONFIG_FILENAME = 'settings.json'
 
 
-def load_config():
-    with open(BASE_CONFIG_FILENAME, 'r') as f:
+def load_config(filename=BASE_CONFIG_FILENAME):
+    with open(filename, 'r') as f:
         try:
             base_config = json.load(f)
         except Exception as e:  # dunno
@@ -25,11 +25,12 @@ def load_config():
     return base_config
 
 
-def load_talk_config(talk_config_json):
+def load_talk_config(talk_config_file):
     talk_config = None
 
     try:
-        talk_config = json.loads(talk_config_json)
+        with open(talk_config_file, 'r') as f:
+            talk_config = json.load(f)
     except Exception as e:  # dunno
         print "Error loading talk config:"
         print e
@@ -37,11 +38,9 @@ def load_talk_config(talk_config_json):
     return talk_config
 
 
-def setup(base_config, talk_config_json):
+def setup(base_config, talk_config):
     if base_config is None:
         base_config = load_config()
-
-    talk_config = load_talk_config(talk_config_json)
 
     try:
         os.makedirs(os.path.join(base_config['dirs']['output']))
@@ -68,7 +67,12 @@ def create_text_overlay_clip(background_filename, text, duration):
         with open(filename, 'w') as f:
             f.write(text)
 
-        text_clip = mpy.TextClip(filename=filename, font="FreeSans", fontsize=40, color='white', print_cmd=True)
+        text_clip = mpy.TextClip(
+            filename=filename,
+            font="FreeSans",
+            fontsize=40,
+            color='white',
+            print_cmd=True)
         text_clip = text_clip.set_pos(('center', 30))
         text_clip = text_clip.set_duration(duration)
         clips.append(text_clip)
@@ -93,8 +97,9 @@ def create_talk_clip(files=(), start=0, end=None):
     print("Setting up main talk")
     clip_list = []
 
+    last_clip = mpy.VideoFileClip(files.pop())
+
     if end and end >= 0:
-        last_clip = mpy.VideoFileClip(files.pop())
         last_clip = last_clip.subclip(0, end)
 
     for dv in files:
@@ -104,8 +109,8 @@ def create_talk_clip(files=(), start=0, end=None):
     clip_list.append(last_clip)
 
     full_clip = mpy.concatenate(clip_list)
-    full_clip = full_clip.subclip(start)
-    #full_clip.fps = 24
+    if start and start > 0:
+        full_clip = full_clip.subclip(start)
     return full_clip
 
 
@@ -114,7 +119,8 @@ def encode_file(video, base_filename, extension):
     print('Creating video: {0}'.format(filename))
 
     if extension in ('mp4', 'ogv'):
-        video.write_videofile(filename, preset='fast', ffmpeg_params=['-aspect', '16:9'])  #, '-qp', '0', '-crf', '0'])
+        video.write_videofile(
+            filename, preset='fast', ffmpeg_params=['-aspect', '16:9'])
         return filename
     elif extension in ('ogg'):
         video.audio.to_audiofile(filename)
@@ -125,11 +131,11 @@ def encode_file(video, base_filename, extension):
 
 def process_talk(config, talk):
     talk_id = talk['schedule_id']
-    
+
     # Create intro (title) slide
     print('[{0}] Creating intro (title) slide'.format(talk_id))
-    title = talk['title']
-    presenters = talk['presenters']
+    title = talk.get('title', '')
+    presenters = talk.get('presenters', '')
     title_bg = config['backgrounds']['title']
     title_clip = create_title_clip(
         background_filename=title_bg,
@@ -158,7 +164,6 @@ def process_talk(config, talk):
     # Merge all clips together and encode
     print('[{0}] Merging clips'.format(talk_id))
     video = mpy.concatenate([title_clip, talk_clip, credits_clip])
-    print("VIDEO SIZE:", video.size, video.w, video.h)
     if config.get('output_filename', ''):
         filename = config['output_filename'].format(**talk)
     else:
@@ -235,18 +240,19 @@ def process_remote_talk(config, talk):
 
 if __name__ == '__main__':
 
-    parser = argparse.ArgumentParser(description="Encode some videos.")
-    parser.add_argument("-s", "--string", help="talk config as a json string")
+    # parser = argparse.ArgumentParser(description="Encode some videos.")
+    # parser.add_argument("-s", "--string", help="talk config as a json string")
     # parser.add_argument("-f", "--file", help="talk config as a json file")
-    args = parser.parse_args()
+    # args = parser.parse_args()
 
-    if len(sys.argv) > 1:
-        talk_config_json = args.string
-    else:
-        print "Usage: enter a json string describing a talk from the todo queue"
+    if not len(sys.argv) == 3:
+        print "Usage: ./encode_video talk_job.json settings.json"
         sys.exit(1)
 
-    config, talk = setup(None, talk_config_json)
+    talk_config = load_talk_config(sys.argv[1])
+    local_config = load_config(sys.argv[2])
+
+    config, talk = setup(local_config, talk_config)
     if config is None or talk is None:
         sys.exit(1)
-    process_talk(config, talk)
+    process_remote_talk(config, talk)
