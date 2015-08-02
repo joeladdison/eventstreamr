@@ -11,6 +11,8 @@ import moviepy.editor as mpy
 
 
 BASE_CONFIG_FILENAME = 'settings.json'
+FONT = '/usr/share/fonts/truetype/ubuntu-font-family/Ubuntu-B.ttf'
+DV_FRAME_SIZE = (720, 576)
 
 
 def load_config(filename=BASE_CONFIG_FILENAME):
@@ -69,7 +71,10 @@ def create_text_overlay_clip(background_filename, text, duration):
 
         text_clip = mpy.TextClip(
             filename=filename,
-            font="FreeSans",
+            method='caption',  # wrap text automatically
+            size=DV_FRAME_SIZE,  # required for caption
+            align='North',
+            font=FONT,
             fontsize=40,
             color='white',
             print_cmd=True)
