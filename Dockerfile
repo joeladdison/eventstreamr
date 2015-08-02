@@ -17,3 +17,7 @@ RUN easy_install -U pip
 ADD . /eventstreamr
 WORKDIR eventstreamr
 RUN pip install -r requirements.txt
+ENV C_FORCE_ROOT=1
+ENV PYTHONPATH=/eventstreamr
+WORKDIR /eventstreamr
+ENTRYPOINT /bin/bash docker_run.sh

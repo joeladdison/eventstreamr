@@ -1,8 +1,0 @@
-worker:
-    image: rstuart85/eventstreamr
-    command: /bin/bash docker_run.sh
-    environment: 
-      - C_FORCE_ROOT=1
-      - PYTHONPATH=..
-    privileged: true
-    working_dir: /eventstreamr

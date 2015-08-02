@@ -27,3 +27,7 @@ Station Script Requirements
 ===========================
 
 See package.deps for list of packages required
+
+Docker Image
+============
+`docker run --privileged joeladdison/eventstreamr`
