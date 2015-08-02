@@ -3,6 +3,7 @@ import os
 import signal
 import logging
 import fnmatch
+import shutil
 
 from flask import Flask, request, jsonify, json, make_response
 from flask.ext.cors import CORS
@@ -278,10 +279,23 @@ def do_encoding(talk_job_filename):
 
     # Load talk job
     queue_dir = local_config['dirs']['queue']
-    job_path = os.path.join(queue_dir, talk_job_filename)
-    talk_job = encode_video.load_talk_config(job_path)
+    queue_job_path = os.path.join(queue_dir, talk_job_filename)
+    if not os.path.exists(queue_job_path):
+        print('Failed to load job: {0}'.format(queue_job_path))
+        return
+
+    # Move to in progress
+    in_progress_dir = local_config['dirs']['in_progress']
+    try:
+        os.makedirs(in_progress_dir)
+    except OSError:
+        pass
+    in_progress_job_path = os.path.join(in_progress_dir, talk_job_filename)
+    shutil.move(queue_job_path, in_progress_job_path)
+
+    talk_job = encode_video.load_talk_config(in_progress_job_path)
     if not talk_job:
-        print('Failed to load job: {0}'.format(job_path))
+        print('Failed to load job: {0}'.format(in_progress_job_path))
         return
 
     # Setup talk job
@@ -289,8 +303,23 @@ def do_encoding(talk_job_filename):
 
     # Run encoding
     print('Starting encoding: {0}'.format(talk_job['schedule_id']))
-    encode_video.process_remote_talk(config, talk)
-    print('Finished encoding: {0}'.format(talk_job['schedule_id']))
+    output_files = encode_video.process_remote_talk(config, talk)
+
+    if output_files:
+        # Move job to complete
+        complete_dir = local_config['dirs']['complete']
+        try:
+            os.makedirs(complete_dir)
+        except OSError:
+            pass
+        complete_job_path = os.path.join(complete_dir, talk_job_filename)
+        shutil.move(in_progress_job_path, complete_job_path)
+
+        print('Finished encoding: {0}'.format(talk_job['schedule_id']))
+    else:
+        # Move job back to queue
+        shutil.move(in_progress_job_path, queue_job_path)
+        print('Encoding FAILED: {0}'.format(talk_job['schedule_id']))
 
 
 if __name__ == "__main__":

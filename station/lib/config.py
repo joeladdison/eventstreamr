@@ -116,6 +116,8 @@ def blank_local_config():
             "scripts": "/home/av/eventstreamr/station/bin",
             "working": "/home/av/eventstreamr",
             "queue": "/srv/av/2015/queue/",
+            "in_progress": "/srv/av/2015/in_progress",
+            "complete": "/srv/av/2015/complete",
             "recordings": "/localbackup/recordings/",
             "output": "/localbackup/output/",
             "remote_recordings": "/srv/av/2015/recordings",
@@ -128,7 +130,7 @@ def blank_local_config():
             "credits": "/srv/av/2015/media/pyconau2015_titleslide720x576.png"
         },
         "output_filename": "{schedule_id}",
-        "output_extensions": ['mp4'],
+        "output_extensions": ['mp4', 'ogv', 'ogg'],
         "use_celery": True,
     }
 

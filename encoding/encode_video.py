@@ -194,6 +194,8 @@ def process_remote_talk(config, talk):
     talk_id = talk['schedule_id']
     print('Processing talk: {0}'.format(talk['schedule_id']))
 
+    output_files = []
+
     # Copy talk to local directory
     local_files = []
     copied_files = []
@@ -211,7 +213,7 @@ def process_remote_talk(config, talk):
             except OSError:
                 print('Failed to make local recording dir: {0}'.format(
                     local_recording))
-                return
+                return output_files
 
         if not os.path.exists(local_path):
             print('[{0}] Copying file: {1} to {2}'.format(
@@ -238,7 +240,7 @@ def process_remote_talk(config, talk):
             os.makedirs(config['dirs']['remote_output'])
     except OSError:
         print('Failed to create output directories')
-        return
+        return output_files
 
     # Process the talk
     generated_files = process_talk(config, talk)
@@ -248,6 +250,7 @@ def process_remote_talk(config, talk):
         print('[{0}] Copying output files'.format(talk_id))
         for f in generated_files:
             filename = f.split(config['dirs']['output'])[1]
+            output_files.append(filename)
             remote_path = os.path.join(
                 config['dirs']['remote_output'], filename)
             print('[{0}] Copying file: {1} to {2}'.format(
@@ -264,6 +267,8 @@ def process_remote_talk(config, talk):
             print('[{0}] Failed to remove: {1}'.format(talk_id, f))
 
     print('[{0}] Completed processing encoding job'.format(talk_id))
+
+    return output_files
 
 
 if __name__ == '__main__':
