@@ -70,12 +70,16 @@ myCtrls.controller('status-list', ['$scope', '$http', '$timeout',
 myCtrls.controller('encoding', function($scope, $http) {
     $scope.schedule = {
         rooms: {},
-        room: 'Kennedy',
+        room: '',
         talks: {},
         talkId: null,
         talk: null,
         talkStatus: null,
-        queue: [],
+        queue: {
+            queue: [],
+            in_progress: [],
+            complete: [],
+        },
         alerts: []
     };
 
@@ -172,8 +176,7 @@ myCtrls.controller('encoding', function($scope, $http) {
             file_list: files,
             in_time: inTime,
             out_time: outTime,
-            credits: talkData.credits,
-            alerts: []
+            credits: talkData.credits
         };
 
         $http.post(url, talk).success(function(data) {

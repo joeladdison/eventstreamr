@@ -111,6 +111,15 @@
   <tab heading="To-do Queue">
     <div class="row">
       <div class="col-md-12">
+        <div class="row">
+          <div class="col-sm-8">
+            <h3>Jobs</h3>
+          </div>
+          <div class="col-sm-4">
+            <button class="btn btn-primary" ng-click="loadQueue('queue')">Refresh</button>
+          </div>
+        </div>
+
         <div class="alert alert-{{alert.type}}" ng-show="schedule.alerts.length > 0" ng-repeat="alert in schedule.alerts"><strong>{{alert.msg}}</strong></div>
 
         <div class="list-group">
@@ -125,6 +134,15 @@
   <tab heading="In Progress Queue">
     <div class="row">
       <div class="col-md-12">
+        <div class="row">
+          <div class="col-sm-8">
+            <h3>Jobs</h3>
+          </div>
+          <div class="col-sm-4">
+            <button class="btn btn-primary" ng-click="loadQueue('in_progress')">Refresh</button>
+          </div>
+        </div>
+
         <div class="alert alert-{{alert.type}}" ng-show="schedule.alerts.length > 0" ng-repeat="alert in schedule.alerts"><strong>{{alert.msg}}</strong></div>
 
         <div class="list-group">
@@ -139,10 +157,19 @@
   <tab heading="Completed">
     <div class="row">
       <div class="col-md-12">
+        <div class="row">
+          <div class="col-sm-8">
+            <h3>Jobs</h3>
+          </div>
+          <div class="col-sm-4">
+            <button class="btn btn-primary" ng-click="loadQueue('complete')">Refresh</button>
+          </div>
+        </div>
+
         <div class="alert alert-{{alert.type}}" ng-show="schedule.alerts.length > 0" ng-repeat="alert in schedule.alerts"><strong>{{alert.msg}}</strong></div>
 
         <div class="list-group">
-          <div ng-repeat="job in schedule.queue.completed" class="list-group-item">
+          <div ng-repeat="job in schedule.queue.complete" class="list-group-item">
             <span>{{job}}</span>
             <button class='btn btn-sm btn-default pull-right' ng-click='resubmitEncode(job)'><span class="glyphicon glyphicon-repeat" style="color: red;"></span> Encode</button>
           </div>
