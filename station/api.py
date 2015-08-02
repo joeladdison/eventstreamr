@@ -239,11 +239,29 @@ def resubmit_encoding_task(talk_id):
         'type': 'error',
     }
 
+    talk_job_filename = '{0}.json'.format(talk_id)
+    queue_dir = local_config['dirs']['queue']
+    try:
+        os.makedirs(queue_dir)
+    except OSError:
+        pass
+    queue_job_path = os.path.join(queue_dir, talk_job_filename)
+
+    # Ensure job is in the queue directory
+    in_progress_dir = local_config['dirs']['in_progress']
+    in_progress_job_path = os.path.join(in_progress_dir, talk_job_filename)
+    if os.path.exists(in_progress_job_path):
+        shutil.move(in_progress_job_path, queue_job_path)
+
+    complete_dir = local_config['dirs']['complete']
+    complete_job_path = os.path.join(complete_dir, talk_job_filename)
+    if os.path.exists(complete_job_path):
+        shutil.move(complete_job_path, queue_job_path)
+
     alerts = []
     # Create celery task
     if app.config['local_config']['use_celery']:
-        job_file = '{0}.json'.format(talk_id)
-        do_encoding.delay(job_file)
+        do_encoding.delay(talk_job_filename)
         app.logger.info('Submitted job to celery: {0}'.format(talk_id))
         alerts.append(success_msg)
     else:
@@ -252,10 +270,13 @@ def resubmit_encoding_task(talk_id):
     return jsonify(alerts=alerts)
 
 
-@app.route('/encoding/queue')
-def encoding_queue():
+@app.route('/encoding/jobs/<queue_type>')
+def encoding_jobs(queue_type):
+    if queue_type not in ('queue', 'in_progress', 'complete'):
+        return jsonify(error='Invalid queue type')
+
     # Ensure queue folder exists
-    queue_dir = app.config['local_config']['dirs']['queue']
+    queue_dir = app.config['local_config']['dirs'][queue_type]
     try:
         os.makedirs(queue_dir)
     except OSError:

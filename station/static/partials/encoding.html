@@ -108,13 +108,41 @@
       </div>
     </div>
   </tab>
-  <tab heading="Queue">
+  <tab heading="To-do Queue">
     <div class="row">
       <div class="col-md-12">
         <div class="alert alert-{{alert.type}}" ng-show="schedule.alerts.length > 0" ng-repeat="alert in schedule.alerts"><strong>{{alert.msg}}</strong></div>
 
         <div class="list-group">
-          <div ng-repeat="job in schedule.queue" class="list-group-item">
+          <div ng-repeat="job in schedule.queue.queue" class="list-group-item">
+            <span>{{job}}</span>
+            <button class='btn btn-sm btn-default pull-right' ng-click='resubmitEncode(job)'><span class="glyphicon glyphicon-repeat" style="color: red;"></span> Encode</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </tab>
+  <tab heading="In Progress Queue">
+    <div class="row">
+      <div class="col-md-12">
+        <div class="alert alert-{{alert.type}}" ng-show="schedule.alerts.length > 0" ng-repeat="alert in schedule.alerts"><strong>{{alert.msg}}</strong></div>
+
+        <div class="list-group">
+          <div ng-repeat="job in schedule.queue.in_progress" class="list-group-item">
+            <span>{{job}}</span>
+            <button class='btn btn-sm btn-default pull-right' ng-click='resubmitEncode(job)'><span class="glyphicon glyphicon-repeat" style="color: red;"></span> Encode</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </tab>
+  <tab heading="Completed">
+    <div class="row">
+      <div class="col-md-12">
+        <div class="alert alert-{{alert.type}}" ng-show="schedule.alerts.length > 0" ng-repeat="alert in schedule.alerts"><strong>{{alert.msg}}</strong></div>
+
+        <div class="list-group">
+          <div ng-repeat="job in schedule.queue.completed" class="list-group-item">
             <span>{{job}}</span>
             <button class='btn btn-sm btn-default pull-right' ng-click='resubmitEncode(job)'><span class="glyphicon glyphicon-repeat" style="color: red;"></span> Encode</button>
           </div>

@@ -75,7 +75,8 @@ myCtrls.controller('encoding', function($scope, $http) {
         talkId: null,
         talk: null,
         talkStatus: null,
-        queue: []
+        queue: [],
+        alerts: []
     };
 
     $scope.$watch('schedule.room', function() {
@@ -121,13 +122,17 @@ myCtrls.controller('encoding', function($scope, $http) {
         });
     };
 
-    $scope.loadQueue = function() {
-        var url = '/encoding/queue';
+    $scope.loadQueue = function(queue_type) {
+        var url = '/encoding/jobs/' + queue_type;
         $http.get(url).success(function(data) {
             if ('error' in data) {
                 // Handle error
+                $scope.schedule.alerts = [{
+                    type: 'error',
+                    msg: data.error
+                }];
             } else {
-                $scope.schedule.queue = data.queue;
+                $scope.schedule.queue[queue_type] = data.queue;
             }
         });
     };
@@ -181,13 +186,18 @@ myCtrls.controller('encoding', function($scope, $http) {
 
         $http.get(url).success(function(data) {
             if ('alerts' in data) {
-                console.log(data.alerts)
                 $scope.schedule.alerts = data.alerts;
             }
         });
+
+        $scope.loadQueue('queue');
+        $scope.loadQueue('in_progress');
+        $scope.loadQueue('complete');
     };
 
     // Initialise
     $scope.loadRooms();
-    $scope.loadQueue();
+    $scope.loadQueue('queue');
+    $scope.loadQueue('in_progress');
+    $scope.loadQueue('complete');
 });
