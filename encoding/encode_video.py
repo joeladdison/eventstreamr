@@ -185,25 +185,33 @@ def process_talk(config, talk):
 def process_remote_talk(config, talk):
     talk_id = talk['schedule_id']
     print('Processing talk: {0}'.format(talk['schedule_id']))
+
     # Copy talk to local directory
     local_files = []
+    copied_files = []
     for f in talk['file_list']:
         file_path = os.path.join(f['filepath'], f['filename'])
         local_path = os.path.join(config['dirs']['recordings'], file_path)
-        remote_path = os.path.join(config['dirs']['remote_recordings'], file_path)
+        remote_path = os.path.join(
+            config['dirs']['remote_recordings'], file_path)
 
-        local_recording = os.path.join(config['dirs']['recordings'], f['filepath'])
+        local_recording = os.path.join(
+            config['dirs']['recordings'], f['filepath'])
         if not os.path.exists(local_recording):
             try:
                 os.makedirs(local_recording)
             except OSError:
-                print('Failed to make local recording dir: {0}'.format(local_recording))
+                print('Failed to make local recording dir: {0}'.format(
+                    local_recording))
                 return
 
         if not os.path.exists(local_path):
-            print('[{0}] Copying file: {1} to {2}'.format(talk_id, remote_path, local_path))
+            print('[{0}] Copying file: {1} to {2}'.format(
+                talk_id, remote_path, local_path))
             shutil.copy(remote_path, local_path)
-            print('[{0}] Finished copying file: {1} to {2}'.format(talk_id, remote_path, local_path))
+            print('[{0}] Finished copying file: {1} to {2}'.format(
+                talk_id, remote_path, local_path))
+            copied_files.append(local_path)
 
         local_files.append(local_path)
 
@@ -213,10 +221,12 @@ def process_remote_talk(config, talk):
 
     try:
         if not os.path.exists(config['dirs']['output']):
-            print('[{0}] Creating directory: {1}'.format(talk_id, config['dirs']['output']))
+            print('[{0}] Creating directory: {1}'.format(
+                talk_id, config['dirs']['output']))
             os.makedirs(config['dirs']['output'])
         if not os.path.exists(config['dirs']['remote_output']):
-            print('[{0}] Creating directory: {1}'.format(talk_id, config['dirs']['remote_output']))
+            print('[{0}] Creating directory: {1}'.format(
+                talk_id, config['dirs']['remote_output']))
             os.makedirs(config['dirs']['remote_output'])
     except OSError:
         print('Failed to create output directories')
@@ -232,8 +242,18 @@ def process_remote_talk(config, talk):
             filename = f.split(config['dirs']['output'])[1]
             remote_path = os.path.join(
                 config['dirs']['remote_output'], filename)
-            print('[{0}] Copying file: {1} to {2}'.format(talk_id, f, remote_path))
+            print('[{0}] Copying file: {1} to {2}'.format(
+                talk_id, f, remote_path))
             shutil.copy(f, remote_path)
+
+    # Remove the files copied locally
+    print('[{0}] Removing copied files'.format(talk_id))
+    for f in copied_files:
+        try:
+            os.remove(f)
+            print('[{0}] Removed file: {1}'.format(talk_id, f))
+        except OSError:
+            print('[{0}] Failed to remove: {1}'.format(talk_id, f))
 
     print('[{0}] Completed processing encoding job'.format(talk_id))
 
