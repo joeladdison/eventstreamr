@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-import sys
 import os
 import signal
 import logging
@@ -18,6 +17,12 @@ app = Flask(__name__, static_url_path='')
 app.config.update(
     CELERY_BROKER_URL='amqp://encoder:3nc0d3r@10.4.4.3:5672',
 )
+
+# Load config
+config_filename = os.environ.get('API_SETTINGS', 'settings.json')
+local_config = config.load_local_config(config_filename)
+app.config['local_config'] = local_config
+
 celery = make_celery(app)
 
 eventstreamr_log = logging.getLogger("eventstreamr")
@@ -192,6 +197,7 @@ def room_schedule(room):
 @app.route('/encoding/submit', methods=['POST'])
 def submit_encoding_task():
     talk = request.get_json(silent=True)
+    talk_id = talk['schedule_id']
 
     # Ensure queue folder exists
     queue_dir = app.config['local_config']['dirs']['queue']
@@ -201,50 +207,52 @@ def submit_encoding_task():
         pass
 
     # Save job to queue
-    job_file = os.path.join(queue_dir, str(talk['schedule_id'])) + '.json'
-    with open(job_file, 'w') as f:
+    job_file = '{0}.json'.format(talk_id)
+    job_path = os.path.join(queue_dir, job_file)
+    with open(job_path, 'w') as f:
             json.dump(
                 talk, f, sort_keys=True, indent=4, separators=(',', ': '))
 
-    app.logger.info('Submitted job to queue: {0}'.format(talk['schedule_id']))
+    app.logger.info('Submitted job to queue: {0}'.format(talk_id))
 
     # Create celery task
     if app.config['local_config']['use_celery']:
-        json_data = json.dumps(talk)
-        do_encoding.delay(json.dumps(app.config['local_config']), json_data)
-        app.logger.info('Submitted job to celery: {0}'.format(talk['schedule_id']))
+        do_encoding.delay(job_file)
+        app.logger.info('Submitted job to celery: {0}'.format(talk_id))
 
     # TODO: Actually ensure we were successful
-    success_msg = 'Encoding job for {0} submitted successfully'.format(
-        talk['schedule_id'])
+    success_msg = 'Encoding job for {0} submitted successfully'.format(talk_id)
 
     return jsonify(result=success_msg)
 
 
 @celery.task(name="api.do_encoding")
-def do_encoding(config_json, talk_json):
+def do_encoding(talk_job_filename):
     """
     Schedule a task to encode the video as described by the JSON config str in
     `json_conf`.
 
     TODO: Include Youtube Uploading here as well?
     """
-    logger = get_task_logger(__name__)
-    local_config = json.loads(config_json)
-    talk_job = json.loads(talk_json)
-    logger.info('Received job: {0}'.format(talk_job['schedule_id']))
+    print('Received job: {0}'.format(talk_job_filename))
+    local_config = app.config['local_config']
+
+    # Load talk job
+    queue_dir = local_config['dirs']['queue']
+    job_path = os.path.join(queue_dir, talk_job_filename)
+    talk_job = encode_video.load_talk_config(job_path)
+    if not talk_job:
+        print('Failed to load job: {0}'.format(job_path))
+        return
+
+    # Setup talk job
     config, talk = encode_video.setup(local_config, talk_job)
-    logger.info('Starting encoding: {0}'.format(talk_job['schedule_id']))
+
+    # Run encoding
+    print('Starting encoding: {0}'.format(talk_job['schedule_id']))
     encode_video.process_remote_talk(config, talk)
-    logger.info('Finished encoding: {0}'.format(talk_job['schedule_id']))
+    print('Finished encoding: {0}'.format(talk_job['schedule_id']))
 
 
 if __name__ == "__main__":
-    if len(sys.argv) > 1:
-        config_filename = sys.argv[1]
-    else:
-        config_filename = 'settings.json'
-
-    local_config = config.load_local_config(config_filename)
-    app.config['local_config'] = local_config
     app.run(host='0.0.0.0', port=5000, debug=True)
