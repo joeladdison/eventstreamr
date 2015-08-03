@@ -219,6 +219,7 @@ def submit_encoding_task():
 
     # Create celery task
     if app.config['local_config']['use_celery']:
+        formats = app.config['local_config']['output_extensions']
         do_encoding.delay(job_file, formats)
         app.logger.info('Submitted job to celery: {0}'.format(talk_id))
 
