@@ -263,8 +263,8 @@ def encoding_jobs():
     if not os.path.exists(queue_dir):
         return jsonify(error='Queue directory could not be found')
 
-    jobs = [f[:-5] for f in
-            fnmatch.filter(os.listdir(queue_dir), '*.json')]
+    jobs = sorted(int(f[:-5]) for f in
+                  fnmatch.filter(os.listdir(queue_dir), '*.json'))
     return jsonify(queue=jobs)
 
 
@@ -297,8 +297,8 @@ def encoding_output_status():
         return jsonify(error='Output directory could not be found')
 
     formats = local_config.get('output_extensions', ('mp4', 'ogv', 'ogg'))
-    jobs = [f[:-5] for f in
-            fnmatch.filter(os.listdir(queue_dir), '*.json')]
+    jobs = sorted(int(f[:-5]) for f in
+                  fnmatch.filter(os.listdir(queue_dir), '*.json'))
 
     # Check if output files exist for talk jobs
     status = []
