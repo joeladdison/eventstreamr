@@ -75,13 +75,16 @@ myCtrls.controller('encoding', function($scope, $http) {
         talkId: null,
         talk: null,
         talkStatus: null,
-        queue: {
-            queue: [],
-            in_progress: [],
-            complete: [],
+        queue: [],
+        inProgress: {
+            active: [],
+            reserved: []
         },
+        outputStatus: [],
         alerts: []
     };
+
+    $scope.formats = [];
 
     $scope.$watch('schedule.room', function() {
         $scope.loadTalks();
@@ -126,8 +129,19 @@ myCtrls.controller('encoding', function($scope, $http) {
         });
     };
 
-    $scope.loadQueue = function(queue_type) {
-        var url = '/encoding/jobs/' + queue_type;
+    $scope.loadFormats = function() {
+        var url = '/encoding/formats';
+        $http.get(url).success(function(data) {
+            if ('error' in data) {
+                // Handle error
+            } else {
+                $scope.formats = data.formats;
+            }
+        });
+    };
+
+    $scope.loadQueue = function() {
+        var url = '/encoding/jobs';
         $http.get(url).success(function(data) {
             if ('error' in data) {
                 // Handle error
@@ -136,7 +150,39 @@ myCtrls.controller('encoding', function($scope, $http) {
                     msg: data.error
                 }];
             } else {
-                $scope.schedule.queue[queue_type] = data.queue;
+                $scope.schedule.queue = data.queue;
+            }
+        });
+    };
+
+    $scope.loadInProgress = function() {
+        var url = '/encoding/in-progress';
+        $http.get(url).success(function(data) {
+            if ('error' in data) {
+                // Handle error
+                $scope.schedule.alerts = [{
+                    type: 'error',
+                    msg: data.error
+                }];
+            } else {
+                $scope.schedule.inProgress = data.status;
+            }
+        });
+    };
+
+    $scope.loadOutputStatus = function() {
+        $scope.loadFormats();
+
+        var url = '/encoding/output-status';
+        $http.get(url).success(function(data) {
+            if ('error' in data) {
+                // Handle error
+                $scope.schedule.alerts = [{
+                    type: 'error',
+                    msg: data.error
+                }];
+            } else {
+                $scope.schedule.outputStatus = data.status;
             }
         });
     };
@@ -184,23 +230,32 @@ myCtrls.controller('encoding', function($scope, $http) {
         });
     };
 
-    $scope.resubmitEncode = function(id) {
-        var url = '/encoding/resubmit/' + id;
+    $scope.resubmitEncode = function(id, formats) {
+        if (formats === undefined || formats === null) {
+            // Use default formats
+            formats = $scope.formats;
+        }
 
-        $http.get(url).success(function(data) {
+        var url = '/encoding/resubmit/' + id;
+        var postData = {
+            formats: formats
+        };
+
+        $http.post(url, postData).success(function(data) {
             if ('alerts' in data) {
                 $scope.schedule.alerts = data.alerts;
             }
         });
 
-        $scope.loadQueue('queue');
-        $scope.loadQueue('in_progress');
-        $scope.loadQueue('complete');
+        $scope.loadQueue();
+        $scope.loadInProgress();
+        $scope.loadOutputStatus();
     };
 
     // Initialise
     $scope.loadRooms();
-    $scope.loadQueue('queue');
-    $scope.loadQueue('in_progress');
-    $scope.loadQueue('complete');
+    $scope.loadFormats();
+    $scope.loadQueue();
+    $scope.loadInProgress();
+    $scope.loadOutputStatus();
 });

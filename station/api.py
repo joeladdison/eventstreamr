@@ -3,7 +3,6 @@ import os
 import signal
 import logging
 import fnmatch
-import shutil
 
 from flask import Flask, request, jsonify, json, make_response
 from flask.ext.cors import CORS
@@ -13,7 +12,7 @@ from encoding.lib import schedule
 from lib import devices, config
 from tasks import make_celery
 
-from celery.utils.log import get_task_logger
+from celery.app import control
 
 app = Flask(__name__, static_url_path='')
 app.config.update(
@@ -220,7 +219,7 @@ def submit_encoding_task():
 
     # Create celery task
     if app.config['local_config']['use_celery']:
-        do_encoding.delay(job_file)
+        do_encoding.delay(job_file, formats)
         app.logger.info('Submitted job to celery: {0}'.format(talk_id))
 
     # TODO: Actually ensure we were successful
@@ -229,7 +228,7 @@ def submit_encoding_task():
     return jsonify(result=success_msg)
 
 
-@app.route('/encoding/resubmit/<talk_id>')
+@app.route('/encoding/resubmit/<talk_id>', methods=['POST'])
 def resubmit_encoding_task(talk_id):
     success_msg = {
         'msg': 'Encoding job for {0} submitted successfully'.format(talk_id),
@@ -240,29 +239,16 @@ def resubmit_encoding_task(talk_id):
         'type': 'error',
     }
 
-    talk_job_filename = '{0}.json'.format(talk_id)
-    queue_dir = local_config['dirs']['queue']
-    try:
-        os.makedirs(queue_dir)
-    except OSError:
-        pass
-    queue_job_path = os.path.join(queue_dir, talk_job_filename)
+    data = request.get_json(silent=True)
+    formats = data.get('formats', [])
 
-    # Ensure job is in the queue directory
-    in_progress_dir = local_config['dirs']['in_progress']
-    in_progress_job_path = os.path.join(in_progress_dir, talk_job_filename)
-    if os.path.exists(in_progress_job_path):
-        shutil.move(in_progress_job_path, queue_job_path)
-
-    complete_dir = local_config['dirs']['complete']
-    complete_job_path = os.path.join(complete_dir, talk_job_filename)
-    if os.path.exists(complete_job_path):
-        shutil.move(complete_job_path, queue_job_path)
+    app.logger.info('Received job resubmit: {0} {1}'.format(talk_id, formats))
 
     alerts = []
     # Create celery task
     if app.config['local_config']['use_celery']:
-        do_encoding.delay(talk_job_filename)
+        talk_job_filename = '{0}.json'.format(talk_id)
+        do_encoding.delay(talk_job_filename, formats)
         app.logger.info('Submitted job to celery: {0}'.format(talk_id))
         alerts.append(success_msg)
     else:
@@ -271,25 +257,66 @@ def resubmit_encoding_task(talk_id):
     return jsonify(alerts=alerts)
 
 
-@app.route('/encoding/jobs/<queue_type>')
-def encoding_jobs(queue_type):
-    if queue_type not in ('queue', 'in_progress', 'complete'):
-        return jsonify(error='Invalid queue type')
-
-    # Ensure queue folder exists
-    queue_dir = app.config['local_config']['dirs'][queue_type]
-    try:
-        os.makedirs(queue_dir)
-    except OSError:
-        pass
+@app.route('/encoding/jobs')
+def encoding_jobs():
+    queue_dir = app.config['local_config']['dirs']['queue']
+    if not os.path.exists(queue_dir):
+        return jsonify(error='Queue directory could not be found')
 
     jobs = [f[:-5] for f in
             fnmatch.filter(os.listdir(queue_dir), '*.json')]
     return jsonify(queue=jobs)
 
 
+@app.route('/encoding/formats')
+def encoding_formats():
+    formats = app.config['local_config'].get(
+        'output_extensions', ('mp4', 'ogv', 'ogg'))
+    return jsonify(formats=formats)
+
+
+@app.route('/encoding/in-progress')
+def encoding_in_progress():
+    c = control.Control(app=celery)
+    status = {
+        'active': c.inspect().active(),
+        'reserved': c.inspect().reserved(),
+    }
+    return jsonify(status=status)
+
+
+@app.route('/encoding/output-status')
+def encoding_output_status():
+    local_config = app.config['local_config']
+    queue_dir = local_config['dirs']['queue']
+    if not os.path.exists(queue_dir):
+        return jsonify(error='Queue directory could not be found')
+
+    output_dir = local_config['dirs']['remote_output']
+    if not os.path.exists(output_dir):
+        return jsonify(error='Output directory could not be found')
+
+    formats = local_config.get('output_extensions', ('mp4', 'ogv', 'ogg'))
+    jobs = [f[:-5] for f in
+            fnmatch.filter(os.listdir(queue_dir), '*.json')]
+
+    # Check if output files exist for talk jobs
+    status = []
+    for job in jobs:
+        job_status = {
+            'schedule_id': job
+        }
+        for f in formats:
+            filename = '{0}.{1}'.format(job, f)
+            file_path = os.path.join(output_dir, filename)
+            job_status[f] = os.path.exists(file_path)
+        status.append(job_status)
+
+    return jsonify(status=status)
+
+
 @celery.task(name="api.do_encoding")
-def do_encoding(talk_job_filename):
+def do_encoding(talk_job_filename, formats):
     """
     Schedule a task to encode the video as described by the JSON config str in
     `json_conf`.
@@ -310,18 +337,9 @@ def do_encoding(talk_job_filename):
         print('Failed to load job: {0}'.format(queue_job_path))
         return
 
-    # Move to in progress
-    in_progress_dir = local_config['dirs']['in_progress']
-    try:
-        os.makedirs(in_progress_dir)
-    except OSError:
-        pass
-    in_progress_job_path = os.path.join(in_progress_dir, talk_job_filename)
-    shutil.move(queue_job_path, in_progress_job_path)
-
-    talk_job = encode_video.load_talk_config(in_progress_job_path)
+    talk_job = encode_video.load_talk_config(queue_job_path)
     if not talk_job:
-        print('Failed to load job: {0}'.format(in_progress_job_path))
+        print('Failed to load job: {0}'.format(queue_job_path))
         return
 
     # Setup talk job
@@ -329,22 +347,11 @@ def do_encoding(talk_job_filename):
 
     # Run encoding
     print('Starting encoding: {0}'.format(talk_job['schedule_id']))
-    output_files = encode_video.process_remote_talk(config, talk)
+    output_files = encode_video.process_remote_talk(config, talk, formats)
 
     if output_files:
-        # Move job to complete
-        complete_dir = local_config['dirs']['complete']
-        try:
-            os.makedirs(complete_dir)
-        except OSError:
-            pass
-        complete_job_path = os.path.join(complete_dir, talk_job_filename)
-        shutil.move(in_progress_job_path, complete_job_path)
-
         print('Finished encoding: {0}'.format(talk_job['schedule_id']))
     else:
-        # Move job back to queue
-        shutil.move(in_progress_job_path, queue_job_path)
         print('Encoding FAILED: {0}'.format(talk_job['schedule_id']))
 
 

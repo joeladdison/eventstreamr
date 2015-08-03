@@ -137,7 +137,7 @@ def encode_file(video, base_filename, extension):
     return None
 
 
-def process_talk(config, talk):
+def process_talk(config, talk, formats):
     talk_id = talk['schedule_id']
 
     # Create intro (title) slide
@@ -180,17 +180,16 @@ def process_talk(config, talk):
 
     print('[{0}] Starting encoding'.format(talk_id))
     generated_files = []
-    extensions = config.get('output_extensions', ('mp4', 'ogv', 'ogg'))
-    for ext in extensions:
-        f = encode_file(video, output_path, ext)
-        if f:
-            generated_files.append(f)
+    for f in formats:
+        output_filename = encode_file(video, output_path, f)
+        if output_filename:
+            generated_files.append(output_filename)
 
     print('[{0}] Finished encoding'.format(talk_id))
     return generated_files
 
 
-def process_remote_talk(config, talk):
+def process_remote_talk(config, talk, formats):
     talk_id = talk['schedule_id']
     print('Processing talk: {0}'.format(talk['schedule_id']))
 
@@ -243,7 +242,7 @@ def process_remote_talk(config, talk):
         return output_files
 
     # Process the talk
-    generated_files = process_talk(config, talk)
+    generated_files = process_talk(config, talk, formats)
 
     # Copy the talk to the final location
     if config['dirs']['output'] != config['dirs']['remote_output']:
@@ -288,4 +287,5 @@ if __name__ == '__main__':
     config, talk = setup(local_config, talk_config)
     if config is None or talk is None:
         sys.exit(1)
-    process_remote_talk(config, talk)
+    formats = config.get('output_extensions', ('mp4', 'ogv', 'ogg'))
+    process_remote_talk(config, talk, formats)
