@@ -299,8 +299,12 @@ def do_encoding(talk_job_filename):
     print('Received job: {0}'.format(talk_job_filename))
     local_config = app.config['local_config']
 
-    # Load talk job
+    # Make sure we have access to the NFS mount
     queue_dir = local_config['dirs']['queue']
+    assert os.path.isdir(queue_dir), \
+        "Can't access the queue dir. Is NFS mounted?"
+
+    # Load talk job
     queue_job_path = os.path.join(queue_dir, talk_job_filename)
     if not os.path.exists(queue_job_path):
         print('Failed to load job: {0}'.format(queue_job_path))
