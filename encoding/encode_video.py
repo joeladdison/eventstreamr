@@ -1,11 +1,13 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from __future__ import unicode_literals
 import argparse
 import json
 import os
 import sys
 import shutil
+import codecs
 
 import moviepy.editor as mpy
 
@@ -66,7 +68,7 @@ def create_text_overlay_clip(background_filename, text, duration):
     if text:
         # Set up the text itself
         filename = '/tmp/text_clip.txt'
-        with open(filename, 'w') as f:
+        with codecs.open(filename, 'w', encoding="utf-8") as f:
             f.write(text)
 
         text_clip = mpy.TextClip(
