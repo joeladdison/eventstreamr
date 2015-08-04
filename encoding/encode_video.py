@@ -80,7 +80,6 @@ def create_text_overlay_clip(background_filename, text, duration):
             fontsize=40,
             color='white',
             print_cmd=True)
-        text_clip = text_clip.set_pos(('center', 30))
         text_clip = text_clip.set_duration(duration)
         clips.append(text_clip)
 
